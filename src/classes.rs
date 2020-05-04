@@ -12,8 +12,8 @@ pub struct Function {
 }
 
 impl PartialEq for Function {
-  fn eq(&self, other: &Self) -> bool {
-    self.parameters == other.parameters
+  fn eq(&self, _other: &Self) -> bool {
+    false
   }
 }
 
