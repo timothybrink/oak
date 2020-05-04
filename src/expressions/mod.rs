@@ -13,25 +13,6 @@ pub trait Expression: fmt::Debug {
   fn evaluate<'a>(&'a self, scope: &'a Scope<'a>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
 }
 
-// pub trait ExpressionClone {
-//   fn clone_box(&self) -> Box<dyn Expression>;
-// }
-
-// impl<T> ExpressionClone for T
-// where
-//   T: 'static + Expression + Clone
-// {
-//   fn clone_box(&self) -> Box<dyn Expression> {
-//     Box::new(self.clone())
-//   }
-// }
-
-// impl Clone for Box<dyn Expression> {
-//   fn clone(&self) -> Box<dyn Expression> {
-//     self.clone_box()
-//   }
-// }
-
 // ################################################################
 // #                      LITERAL EXPRESSION                      #
 // ################################################################
