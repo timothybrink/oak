@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::rc::Rc;
 use super::errors::*;
 use super::expressions::*;
 
@@ -25,12 +26,12 @@ pub enum Value {
 }
 
 pub struct Scope<'a> {
-  map: HashMap<String, Value>,
-  parent: Option<&'a mut Scope<'a>>,
+  map: HashMap<String, Rc<Value>>,
+  parent: Option<&'a Scope<'a>>,
 }
 
 impl<'a> Scope<'a> {
-  pub fn new(parent: Option<&'a mut Scope<'a>>) -> Self {
+  pub fn new(parent: Option<&'a Scope<'a>>) -> Self {
     let is_global = parent.is_none();
 
     let mut scope = Scope {
@@ -39,16 +40,16 @@ impl<'a> Scope<'a> {
     };
 
     if is_global {
-      scope.map.insert(String::from("true"), Value::Boolean(true));
-      scope.map.insert(String::from("false"), Value::Boolean(false));
+      scope.map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
+      scope.map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
     }
 
     scope
   }
 
-  pub fn get(&self, id: &str) -> Result<&Value, EvalError> {
+  pub fn get(&self, id: &str) -> Result<Rc<Value>, EvalError> {
       match self.map.get(id) {
-        Some(val) => Ok(val),
+        Some(val) => Ok(Rc::clone(val)),
         None => {
           match &self.parent {
             Some(parent_scope) => parent_scope.get(id),
@@ -58,17 +59,17 @@ impl<'a> Scope<'a> {
       }
   }
 
-  pub fn set(&mut self, id: String, val: Value) {
+  pub fn set(&mut self, id: String, val: Rc<Value>) {
     self.map.insert(id, val);
   }
 }
 
-pub struct StringIterator {
+pub struct StringIterator<'a> {
   next_value: Option<char>,
-  iter: Box<dyn Iterator<Item = char>>,
+  iter: Box<dyn Iterator<Item = char> + 'a>,
 }
 
-impl Iterator for StringIterator {
+impl<'a> Iterator for StringIterator<'a> {
   type Item = char;
 
   fn next(&mut self) -> Option<char> {
@@ -78,8 +79,8 @@ impl Iterator for StringIterator {
   }
 }
 
-impl StringIterator {
-  pub fn new(string: &'static str) -> StringIterator {
+impl<'a> StringIterator<'a> {
+  pub fn new<'b>(string: &'b String) -> StringIterator {
     let mut iter = Box::new(string.chars());
     let next_value = iter.next();
     

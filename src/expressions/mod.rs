@@ -2,6 +2,7 @@ use super::classes::*;
 use super::errors::*;
 use std::fmt;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 mod parsers;
 
@@ -9,15 +10,34 @@ mod parsers;
 // #                       EXPRESSION TRAIT                       #
 // ################################################################
 pub trait Expression: fmt::Debug {
-  fn evaluate<'a>(&'a self, scope: &'a mut Scope<'a>) -> Result<&'a Value, EvalError>;
+  fn evaluate<'a>(&'a self, scope: &'a Scope<'a>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
 }
+
+// pub trait ExpressionClone {
+//   fn clone_box(&self) -> Box<dyn Expression>;
+// }
+
+// impl<T> ExpressionClone for T
+// where
+//   T: 'static + Expression + Clone
+// {
+//   fn clone_box(&self) -> Box<dyn Expression> {
+//     Box::new(self.clone())
+//   }
+// }
+
+// impl Clone for Box<dyn Expression> {
+//   fn clone(&self) -> Box<dyn Expression> {
+//     self.clone_box()
+//   }
+// }
 
 // ################################################################
 // #                      LITERAL EXPRESSION                      #
 // ################################################################
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LiteralExpression {
-  value: Value,
+  value: Rc<Value>,
 }
 
 impl LiteralExpression {
@@ -33,15 +53,15 @@ impl LiteralExpression {
 }
 
 impl Expression for LiteralExpression {
-  fn evaluate<'a>(&'a self, scope: &mut Scope) -> Result<&'a Value, EvalError> {
-    Ok(&self.value)
+  fn evaluate(&self, _scope: &Scope, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+    Ok(Rc::clone(&self.value))
   }
 }
 
 // ################################################################
 // #                    IDENTIFIER EXPRESSION                     #
 // ################################################################
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IdentifierExpression {
   name: String,
 }
@@ -67,8 +87,12 @@ impl IdentifierExpression {
 }
 
 impl Expression for IdentifierExpression {
-  fn evaluate<'a>(&self, scope: &'a mut Scope) -> Result<&'a Value, EvalError> {
-    Ok(scope.get(&self.name)?)
+  fn evaluate<'a>(&self, scope: &'a Scope, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+    if self.name == "^" {
+      Ok(pipe_val)
+    } else {
+      Ok(scope.get(&self.name)?)
+    }
   }
 }
 
@@ -76,7 +100,7 @@ impl Expression for IdentifierExpression {
 // #                       BLOCK EXPRESSION                       #
 // ################################################################
 #[derive(Debug)]
-struct BlockExpression {
+pub struct BlockExpression {
   expressions: Vec<Box<dyn Expression>>,
 }
 
@@ -119,16 +143,13 @@ impl BlockExpression {
 }
 
 impl Expression for BlockExpression {
-  fn evaluate<'a>(&'a self, scope: &'a mut Scope<'a>) -> Result<&'a Value, EvalError> {
-    let mut block_scope = Scope::new(Some(scope));
+  fn evaluate(&self, scope: &Scope<'_>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+    let block_scope = Scope::new(Some(scope));
 
-    let mut val = &Value::Null;
+    let mut val = pipe_val;
 
     for expr in self.expressions.iter() {
-      val = expr.evaluate(&mut block_scope)?;
-      // Maybe I need to box the child scope to simplify
-      // lifetimes... Might fix it. Another thing is that I'm still not sure
-      // about referencing Values in the Result of evaluate()
+      val = expr.evaluate(&block_scope, Rc::clone(&val))?;
     }
 
     // Loop through expressions, return result of the last one.
@@ -182,8 +203,34 @@ impl FunctionExpression {
 }
 
 impl Expression for FunctionExpression {
-  fn evaluate<'a>(&'a self, scope: &'a mut Scope) -> Result<&'a Value, EvalError> {
-    Ok(&Value::Number(0.0))
+  fn evaluate(&self, scope: &Scope, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+    // First, get the function object
+    let fn_obj = self.identifier.evaluate(scope, Rc::clone(&pipe_val))?;
+
+    let fn_obj = match &*fn_obj {
+      Value::Function(obj) => obj,
+      _ => return Err(EvalError::new("Identifier does not reference a valid function!"))
+    };
+
+    // Then, evaluate the arguments
+    let mut args = self.arguments.iter().map(|arg_expr| {
+      arg_expr.evaluate(scope, Rc::clone(&pipe_val))
+    });
+
+    // Then, create a function scope with the values of the arguments
+    let mut fn_scope = Scope::new(Some(scope));
+
+    for param_name in fn_obj.parameters.iter() {
+      match args.next() {
+        Some(Ok(val)) => fn_scope.set(param_name.clone(), val),
+        Some(Err(e)) => return Err(e),
+        None => continue,
+      };
+    }
+
+    // Then, evaluate the function body. Note that for now, pipe is given null
+    // in a new function evaluation.
+    Ok(fn_obj.body.evaluate(&fn_scope, Rc::new(Value::Null))?)
   }
 }
 
@@ -193,47 +240,54 @@ impl Expression for FunctionExpression {
 #[cfg(test)]
 mod tests {
   use crate::classes::*;
+  use std::rc::Rc;
 
   #[test]
   fn parses_numerics() {
-    let mut s = StringIterator::new("100.0");
+    let s = &String::from("100.0");
+    let mut s = StringIterator::new(s);
     let exp = super::LiteralExpression::new(&mut s).unwrap();
-    assert_eq!(exp, super::LiteralExpression { value: Value::Number(100.0) })
+    assert_eq!(exp, super::LiteralExpression { value: Rc::new(Value::Number(100.0)) })
   }
 
   #[test]
   fn parses_strings() {
-    let mut s = StringIterator::new("'it\\'s a \"test\"\\\\'  ");
+    let s = &String::from("'it\\'s a \"test\"\\\\'  ");
+    let mut s = StringIterator::new(s);
     let exp = super::LiteralExpression::new(&mut s).unwrap();
     assert_eq!(exp, super::LiteralExpression {
-      value: Value::StringType(String::from("it's a \"test\"\\"))
+      value: Rc::new(Value::StringType(String::from("it's a \"test\"\\")))
     })
   }
 
   #[test]
   fn parses_functions() {
-    let mut s = StringIterator::new("/test a b .'string'W");
+    let s = &"/test a b .'string'W".to_string();
+    let mut s = StringIterator::new(s);
     let exp = super::LiteralExpression::new(&mut s).unwrap();
     println!("{:?}", exp);
   }
 
   #[test]
   fn parses_identifiers() {
-    let mut s = StringIterator::new("+test)tes ");
+    let s = &"+test)tes ".to_string();
+    let mut s = StringIterator::new(s);
     let exp = super::IdentifierExpression::new(&mut s).unwrap();
     assert_eq!(exp, super::IdentifierExpression{ name: String::from("+test") })
   }
 
   #[test]
   fn parses_function_calls() {
-    let mut s = StringIterator::new("(test 'a b c' (b) /arg c e .{c e})");
+    let s = &"(test 'a b c' (b) /arg c e .{c e})".to_string();
+    let mut s = StringIterator::new(s);
     let exp = super::FunctionExpression::new(&mut s).unwrap();
     println!("{:#?}", exp);
   }
 
   #[test]
   fn parses_blocks() {
-    let mut s = StringIterator::new("{10 'test' (fn a b) (def .test /a b c .{body})}");
+    let s = &"{10 'test' (fn a b) (def .test /a b c .{body})}".to_string();
+    let mut s = StringIterator::new(s);
     let exp = super::BlockExpression::new(&mut s).unwrap();
     println!("{:#?}", exp);
   }

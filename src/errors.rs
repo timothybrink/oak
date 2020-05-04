@@ -1,6 +1,6 @@
 #[derive(Debug)]
 pub struct EvalError {
-  reason: &'static str,
+  pub reason: &'static str,
 }
 
 impl EvalError {

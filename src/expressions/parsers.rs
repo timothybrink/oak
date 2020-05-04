@@ -28,7 +28,7 @@ pub fn generic(iter: &mut StringIterator) -> Result<Box<dyn Expression>, EvalErr
   }
 }
 
-pub fn number_parser(iter: &mut StringIterator) -> Result<Value, EvalError> {
+pub fn number_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> {
   let mut value = String::new();
 
   loop {
@@ -51,10 +51,10 @@ pub fn number_parser(iter: &mut StringIterator) -> Result<Value, EvalError> {
     Err(_) => return Err(EvalError::new("Invalid numeric literal!")),
   };
 
-  Ok(Value::Number(value))
+  Ok(Rc::new(Value::Number(value)))
 }
 
-pub fn string_parser(iter: &mut StringIterator) -> Result<Value, EvalError> {
+pub fn string_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> {
   // consume first char
   let first_char = match iter.next() {
     Some(val) => val,
@@ -83,10 +83,10 @@ pub fn string_parser(iter: &mut StringIterator) -> Result<Value, EvalError> {
     }
   }
 
-  Ok(Value::StringType(value))
+  Ok(Rc::new(Value::StringType(value)))
 }
 
-pub fn function_parser(iter: &mut StringIterator) -> Result<Value, EvalError> {
+pub fn function_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> {
   // parse function literal
 
   // first char, not yet consumed, is either a / or a '.'. If /, parse to the .
@@ -135,5 +135,5 @@ pub fn function_parser(iter: &mut StringIterator) -> Result<Value, EvalError> {
     body,
   };
 
-  Ok(Value::Function(fn_obj))
+  Ok(Rc::new(Value::Function(fn_obj)))
 }
