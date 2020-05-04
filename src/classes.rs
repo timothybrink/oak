@@ -70,7 +70,7 @@ impl<'a> Scope<'a> {
         None => {
           match &self.parent {
             Some(parent_scope) => parent_scope.get(id),
-            None => Err(EvalError::new("Reference error: name is not defined"))
+            None => Ok(Rc::new(Value::Null))
           }
         }
       }

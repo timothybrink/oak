@@ -37,20 +37,18 @@ _Note: This has not been implemented yet. I know that may seem pretty useless, b
 
 Identifiers are associated with values via the `def` function, which takes two arguments. The first argument is the identifier to associate with the expression, and the second is an expression whose value will be stored in memory.
 
-Since the identifier is not defined yet, it is necessary to precede it with a function modifier, so that the `def` function gets the identifier itself rather than a ReferenceError because it doesn't exist yet.
-
 As for the last argument, any expression is valid. The result of evaluating that expression will be stored in memory, whether it be a constant value or a function. There is no real difference between values or functions as far is the `def` function or the memory is concerned, however. The only difference is that functions can be called, as described above.
 
 ### Examples
 
 Defining a constant:
 ```
-(def .str 'hello world')
+(def str 'hello world')
 ```
 
 Defining a function:
 ```
-(def .sum \arg1 arg2 .{
+(def sum \arg1 arg2 .{
   (+ arg1 arg2)
 })
 ```
