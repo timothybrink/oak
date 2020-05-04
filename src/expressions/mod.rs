@@ -10,7 +10,7 @@ mod parsers;
 // #                       EXPRESSION TRAIT                       #
 // ################################################################
 pub trait Expression: fmt::Debug {
-  fn evaluate<'a>(&'a self, scope: &'a Scope<'a>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
+  fn evaluate(&self, scope: &Scope<'_>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
 }
 
 // ################################################################
@@ -68,7 +68,7 @@ impl IdentifierExpression {
 }
 
 impl Expression for IdentifierExpression {
-  fn evaluate<'a>(&self, scope: &'a Scope, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+  fn evaluate(&self, scope: &Scope, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
     if self.name == "^" {
       Ok(pipe_val)
     } else {
