@@ -1,10 +1,10 @@
 #[derive(Debug)]
 pub struct EvalError {
-  pub reason: &'static str,
+  pub reason: String,
 }
 
 impl EvalError {
-  pub fn new(reason: &'static str) -> EvalError {
+  pub fn new(reason: String) -> EvalError {
     EvalError { reason }
   }
 }

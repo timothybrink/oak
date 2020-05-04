@@ -56,11 +56,11 @@ pub fn insert_stdlib(scope: &mut Scope) {
       body: Box::new(NativeExpression::new(|scope| {
         let v1 = match *scope.get("v1")? {
           Value::Number(num) => num,
-          _ => return Err(EvalError::new("+ only valid for numbers!")),
+          _ => return Err(EvalError::new("+ only valid for numbers!".to_string())),
         };
         let v2 = match *scope.get("v2")? {
           Value::Number(num) => num,
-          _ => return Err(EvalError::new("+ only valid for numbers!")),
+          _ => return Err(EvalError::new("+ only valid for numbers!".to_string())),
         };
         Ok(Rc::new(Value::Number(v1 + v2)))
       }))

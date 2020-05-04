@@ -27,8 +27,8 @@ impl LiteralExpression {
       Some('0'..='9')        => Ok(LiteralExpression { value: parsers::number_parser(iter)? }),
       Some('\'') | Some('"') => Ok(LiteralExpression { value: parsers::string_parser(iter)? }),
       Some('/') | Some('.')  => Ok(LiteralExpression { value: parsers::function_parser(iter)? }),
-      Some(_)                => Err(EvalError::new("Unknown character!")),
-      None                   => Err(EvalError::new("End of string reached")),
+      Some(ch)                => Err(EvalError::new(format!("Unknown character {}!", ch))),
+      None                   => Err(EvalError::new("End of string reached".to_string())),
     }
   }
 }
@@ -161,7 +161,7 @@ impl FunctionExpression {
     loop {
       let next_char = match iter.preview() {
         Some(val) => val,
-        None => return Err(EvalError::new("End of function expression not found!"))
+        None => return Err(EvalError::new("End of function expression not found!".to_string()))
       };
 
       // consume whitespace
@@ -190,7 +190,7 @@ impl Expression for FunctionExpression {
 
     let fn_obj = match &*fn_obj {
       Value::Function(obj) => obj,
-      _ => return Err(EvalError::new("Identifier does not reference a valid function!"))
+      _ => return Err(EvalError::new(format!("Identifier {} does not reference a valid function!", self.identifier.name)))
     };
 
     // Then, evaluate the arguments

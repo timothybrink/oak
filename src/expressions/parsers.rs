@@ -10,7 +10,7 @@ pub fn generic(iter: &mut StringIterator) -> Result<Box<dyn Expression>, EvalErr
 
   let first_char = match iter.preview() {
     Some(val) => val,
-    None => return Err(EvalError::new("End of string; nothing to parse"))
+    None => return Err(EvalError::new("End of string; nothing to parse".to_string()))
   };
 
   if first_char == '{' {
@@ -24,7 +24,7 @@ pub fn generic(iter: &mut StringIterator) -> Result<Box<dyn Expression>, EvalErr
   } else if !['}', ')', ']', '\\'].contains(&first_char) {
     Ok(Box::new(IdentifierExpression::new(iter)?))
   } else {
-    Err(EvalError::new("Unknown expression type"))
+    Err(EvalError::new(format!("Unknown expression type starting with character {}", first_char)))
   }
 }
 
@@ -48,7 +48,7 @@ pub fn number_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> 
 
   let value: f64 = match value.parse() {
     Ok(val) => val,
-    Err(_) => return Err(EvalError::new("Invalid numeric literal!")),
+    Err(_) => return Err(EvalError::new("Invalid numeric literal!".to_string())),
   };
 
   Ok(Rc::new(Value::Number(value)))
@@ -58,7 +58,7 @@ pub fn string_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> 
   // consume first char
   let first_char = match iter.next() {
     Some(val) => val,
-    None => return Err(EvalError::new("End of string reached")),
+    None => return Err(EvalError::new("End of string reached".to_string())),
   };
 
   let mut value = String::new();
@@ -68,7 +68,7 @@ pub fn string_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> 
     let this_char = match iter.next() {
       Some(val) => val,
       None => {
-        return Err(EvalError::new("End of string literal not found!"))
+        return Err(EvalError::new("End of string literal not found!".to_string()))
       }
     };
     if escaped {
@@ -120,7 +120,7 @@ pub fn function_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError
         Some(val) => {
           current_param.push(val);
         },
-        None => return Err(EvalError::new("Reached end of string while parsing function parameters!"))
+        None => return Err(EvalError::new("Reached end of string while parsing function parameters!".to_string()))
       }
     }
   }
