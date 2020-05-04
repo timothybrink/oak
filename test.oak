@@ -1,0 +1,6 @@
+/test .{
+  (print test)
+  (+ 2000 20)
+}
+
+(^ "Hello World, from Oak.Rust!")

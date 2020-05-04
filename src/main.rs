@@ -6,6 +6,7 @@ use std::rc::Rc;
 mod expressions;
 mod errors;
 mod classes;
+mod stdlib;
 
 use expressions::Expression;
 
@@ -48,7 +49,10 @@ fn main() {
 pub fn run(prgm: String, _config: Config) -> Result<Rc<classes::Value>, errors::EvalError> {
   let mut str_iter = classes::StringIterator::new(&prgm);
   let main_expression = expressions::BlockExpression::new(&mut str_iter)?;
-  let prgm_scope = classes::Scope::new(None);
+  let mut prgm_scope = classes::Scope::new(None);
+
+  // insert stdlib
+  stdlib::insert_stdlib(&mut prgm_scope);
 
   main_expression.evaluate(&prgm_scope, Rc::new(classes::Value::Null))
 }

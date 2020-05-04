@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
+use std::fmt::Display;
+use std::fmt::Debug;
 use super::errors::*;
 use super::expressions::*;
 
@@ -23,6 +25,21 @@ pub enum Value {
   Boolean(bool),
   Function(Function),
   Null,
+}
+
+impl Display for Value {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+    let val = match self {
+      Value::Number(num) => num.to_string(),
+      Value::StringType(st) => st.clone(),
+      Value::Array(_) => "[]".to_string(),
+      Value::Boolean(b) => b.to_string(),
+      Value::Function(_) => "Function".to_string(),
+      Value::Null => "Null".to_string(),
+    };
+    write!(f, "{}", val)?;
+    Ok(())
+  }
 }
 
 pub struct Scope<'a> {
