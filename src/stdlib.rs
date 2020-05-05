@@ -101,6 +101,23 @@ pub fn insert_stdlib(scope: &mut Scope) {
         }
       })),
       closure: Some(Rc::new(Scope::new(None)))
+    }),
+    // type function
+    ("type", Function {
+      parameters: vec!["obj".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let obj = scope.get("obj")?;
+
+        let type_str = match *obj {
+          Value::Number(_) => "number",
+          Value::StringType(_) => "string",
+          Value::Boolean(_) => "boolean",
+          Value::Function(_) => "function",
+          Value::Null => "null",
+        };
+        Ok(Rc::new(Value::StringType(type_str.to_string())))
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
     })
   ];
 
