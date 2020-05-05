@@ -59,6 +59,7 @@ impl<'a> Scope<'a> {
     if is_global {
       scope.map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
       scope.map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
+      scope.map.insert(String::from("null"), Rc::new(Value::Null));
     }
 
     scope
