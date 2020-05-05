@@ -21,7 +21,8 @@ Base expressions have the most variation in syntax. There are five types of lite
  - Booleans are written like identifiers: `true` and `false`.
  - Numeric literals are written like normal: `10` and `0.1`.
  - String literals can be written with either single or double quotes, and can span multiple lines. E.g. `'foo'` and `"bar"`. Backslashes to escape characters are supported.
- - Array literals are written with square brackets. Elements are separated by spaces, e.g. `[1 2 3]`. Elements can be expressions. Arrays are not a special data type in Oak, although it may look that way: an array literal is just a simple way to create a function that takes an index as input and returns the element associated with that index. Arrays have not yet been implemented, but hopefully they will be soon.
+ - Array literals are written with square brackets. Elements are separated by spaces, e.g. `[1 2 3]`. Elements can be expressions. Arrays are not a special data type in Oak, although it may look that way: an array literal is just a simple way to create a function that takes an index as input and returns the element associated with that index. Indexes out of range return null.
+ - There is an additional literal, written as `null`, which represents the null value. This is what is returned when a value does not exist, generally speaking.
 
 ### Block Expressions
 
