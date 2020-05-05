@@ -71,6 +71,36 @@ pub fn insert_stdlib(scope: &mut Scope) {
         Ok(Rc::new(Value::Boolean(v1 == v2)))
       })),
       closure: Some(Rc::new(Scope::new(None)))
+    }),
+    // if function
+    ("if", Function {
+      parameters: vec!["condition".to_string(), "then".to_string(), "else".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let condition = scope.get("condition")?;
+        let then_block = scope.get("then")?;
+        let else_block = scope.get("else")?;
+
+        if let Value::Boolean(b) = *condition {
+          if b {
+            // evaluate then block
+            if let Value::Function(then_obj) = &*then_block {
+              then_obj.call(Vec::new())
+            } else {
+              Err(EvalError::new("then block must be a function!".to_string()))
+            }
+          } else {
+            // evaluate else block
+            if let Value::Function(else_obj) = &*else_block {
+              else_obj.call(Vec::new())
+            } else {
+              Err(EvalError::new("else block must be a function!".to_string()))
+            }
+          }
+        } else {
+          Err(EvalError::new("if condition argument must evaluate to boolean!".to_string()))
+        }
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
     })
   ];
 

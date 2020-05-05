@@ -17,6 +17,32 @@ impl Function {
   pub fn set_closure(&mut self, scope: Rc<Scope>) {
     self.closure = Some(scope);
   }
+
+  pub fn call(&self, arguments: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError> {
+    // Given values, call the function.
+
+    // This bit of matching is necessary for the Rc::clone below.
+    let closure_scope = match &self.closure {
+      Some(s) => s,
+      None => return Err(EvalError::new("Functions must have a closure scope!".to_string())),
+    };
+    let closure_scope = Rc::clone(&closure_scope);
+
+    // Then, create a function scope with the values of the arguments
+    let mut fn_scope = Scope::new(Some(closure_scope));
+
+    let mut args = arguments.iter();
+    for param_name in self.parameters.iter() {
+      match args.next() {
+        Some(val) => fn_scope.set(param_name.clone(), Rc::clone(val)),
+        None => continue,
+      };
+    }
+
+    // Then, evaluate the function body. Note that for now, pipe is given null
+    // in a new function evaluation.
+    Ok(self.body.evaluate(Rc::new(fn_scope), Rc::new(Value::Null))?)
+  }
 }
 
 impl PartialEq for Function {

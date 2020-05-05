@@ -212,31 +212,21 @@ impl Expression for FunctionExpression {
     };
 
     // Then, evaluate the arguments
-    let mut args = self.arguments.iter().map(|arg_expr| {
-      arg_expr.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))
-    });
-    
-    // This bit of matching is necessary for the Rc::clone below.
-    let closure_scope = match &fn_obj.closure {
-      Some(s) => s,
-      None => return Err(EvalError::new("Functions must have a closure scope!".to_string())),
-    };
-    let closure_scope = Rc::clone(closure_scope);
+    let (args, errors): (Vec<_>, Vec<_>) = self.arguments
+      .iter()
+      .map(|arg_expr| {
+        arg_expr.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))
+      })
+      .partition(Result::is_ok);
 
-    // Then, create a function scope with the values of the arguments
-    let mut fn_scope = Scope::new(Some(closure_scope));
-
-    for param_name in fn_obj.parameters.iter() {
-      match args.next() {
-        Some(Ok(val)) => fn_scope.set(param_name.clone(), val),
-        Some(Err(e)) => return Err(e),
-        None => continue,
-      };
+    if errors.len() > 0 {
+      return Err(errors[0].clone().unwrap_err())
     }
 
-    // Then, evaluate the function body. Note that for now, pipe is given null
-    // in a new function evaluation.
-    Ok(fn_obj.body.evaluate(Rc::new(fn_scope), Rc::new(Value::Null))?)
+    let args: Vec<Rc<Value>> = args.into_iter().map(Result::unwrap).collect();
+
+    // Finally, call the function
+    fn_obj.call(args)
   }
 }
 
