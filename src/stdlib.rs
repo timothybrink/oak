@@ -44,6 +44,7 @@ where
 
 pub fn insert_stdlib(scope: &mut Scope) {
   let fns = vec![
+    // Print function
     ("print", Function {
       parameters: vec!["input".to_string()],
       body: Rc::new(NativeExpression::new(|scope| {
@@ -52,20 +53,24 @@ pub fn insert_stdlib(scope: &mut Scope) {
       })),
       closure: Some(Rc::new(Scope::new(None))),
     }),
+    // Add function
     ("+", Function {
       parameters: vec!["v1".to_string(), "v2".to_string()],
       body: Rc::new(NativeExpression::new(|scope| {
-        let v1 = match *scope.get("v1")? {
-          Value::Number(num) => num,
-          _ => return Err(EvalError::new("+ only valid for numbers!".to_string())),
-        };
-        let v2 = match *scope.get("v2")? {
-          Value::Number(num) => num,
-          _ => return Err(EvalError::new("+ only valid for numbers!".to_string())),
-        };
-        Ok(Rc::new(Value::Number(v1 + v2)))
+        let v1 = &*scope.get("v1")?;
+        let v2 = &*scope.get("v2")?;
+        Ok(v1 + v2)
       })),
       closure: Some(Rc::new(Scope::new(None))),
+    }),
+    ("=", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let v1 = &*scope.get("v1")?;
+        let v2 = &*scope.get("v2")?;
+        Ok(Rc::new(Value::Boolean(v1 == v2)))
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
     })
   ];
 

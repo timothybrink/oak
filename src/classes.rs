@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::fmt::Display;
 use std::fmt::Debug;
+use std::ops::Add;
 use super::errors::*;
 use super::expressions::*;
 
@@ -28,10 +29,34 @@ impl PartialEq for Function {
 pub enum Value {
   Number(f64),
   StringType(String),
-  Array(Vec<Value>),
   Boolean(bool),
   Function(Function),
   Null,
+}
+
+impl Add for &Value {
+  type Output = Rc<Value>;
+
+  fn add(self, rhs: Self) -> Rc<Value> {
+    let output = match self {
+      Value::Number(num1) => {
+        if let Value::Number(num2) = rhs {
+          Value::Number(num1 + num2)
+        } else {
+          Value::Null
+        }
+      },
+      Value::StringType(str1) => {
+        if let Value::StringType(str2) = rhs {
+          Value::StringType(str1.clone() + str2)
+        } else {
+          Value::Null
+        }
+      },
+      _ => Value::Null,
+    };
+    Rc::new(output)
+  }
 }
 
 impl Display for Value {
@@ -39,7 +64,6 @@ impl Display for Value {
     let val = match self {
       Value::Number(num) => num.to_string(),
       Value::StringType(st) => st.clone(),
-      Value::Array(_) => "[]".to_string(),
       Value::Boolean(b) => b.to_string(),
       Value::Function(_) => "Function".to_string(),
       Value::Null => "Null".to_string(),
