@@ -1,6 +1,21 @@
-/test .{
-  (print test)
-  (+ 2000 20)
-}
+"
+This is just a super basic bunch of working Oak syntax.
+"
 
-(^ "Hello World, from Oak.Rust!")
+(def .'function' /test .{
+  (print (+ (test 0) (test 1)))
+
+  [(test 2)]
+})
+
+
+(function ["Hello " "World," "from Oak.Rust!"])
+(print (^ 0))
+
+(if (= (type ^) 'function') .{
+  (print 'is a function')
+  true
+} .{
+  (print 'is not a function')
+  false
+})

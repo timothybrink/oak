@@ -3,6 +3,7 @@ use std::rc::Rc;
 use std::fmt::Display;
 use std::fmt::Debug;
 use std::ops::Add;
+use std::cell::RefCell;
 use super::errors::*;
 use super::expressions::*;
 
@@ -29,7 +30,7 @@ impl Function {
     let closure_scope = Rc::clone(&closure_scope);
 
     // Then, create a function scope with the values of the arguments
-    let mut fn_scope = Scope::new(Some(closure_scope));
+    let fn_scope = Scope::new(Some(closure_scope));
 
     let mut args = arguments.iter();
     for param_name in self.parameters.iter() {
@@ -101,7 +102,7 @@ impl Display for Value {
 
 #[derive(Debug)]
 pub struct Scope {
-  map: HashMap<String, Rc<Value>>,
+  map: RefCell<HashMap<String, Rc<Value>>>,
   parent: Option<Rc<Scope>>,
 }
 
@@ -109,22 +110,24 @@ impl Scope {
   pub fn new(parent: Option<Rc<Scope>>) -> Self {
     let is_global = parent.is_none();
 
-    let mut scope = Scope {
-      map: HashMap::new(),
-      parent,
-    };
+    let mut hash_map = HashMap::new();
 
     if is_global {
-      scope.map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
-      scope.map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
-      scope.map.insert(String::from("null"), Rc::new(Value::Null));
+      hash_map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
+      hash_map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
+      hash_map.insert(String::from("null"), Rc::new(Value::Null));
     }
+
+    let scope = Scope {
+      map: RefCell::new(hash_map),
+      parent,
+    };
 
     scope
   }
 
   pub fn get(&self, id: &str) -> Result<Rc<Value>, EvalError> {
-      match self.map.get(id) {
+      match self.map.borrow().get(id) {
         Some(val) => Ok(Rc::clone(val)),
         None => {
           match &self.parent {
@@ -135,8 +138,8 @@ impl Scope {
       }
   }
 
-  pub fn set(&mut self, id: String, val: Rc<Value>) {
-    self.map.insert(id, val);
+  pub fn set(&self, id: String, val: Rc<Value>) {
+    self.map.borrow_mut().insert(id, val);
   }
 }
 

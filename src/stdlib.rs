@@ -53,6 +53,33 @@ pub fn insert_stdlib(scope: &mut Scope) {
       })),
       closure: Some(Rc::new(Scope::new(None))),
     }),
+    // def function
+    ("def", Function {
+      parameters: vec!["identifier".to_string(), "value".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let identifier = scope.get("identifier")?;
+        let value = scope.get("value")?;
+
+
+        if let Value::Function(id_obj) = &*identifier {
+          let scope = match &id_obj.closure {
+            Some(s) => Rc::clone(s),
+            None => return Err(EvalError::new("Scope could not be found!".to_string()))
+          };
+
+          match &*id_obj.call(Vec::new())? {
+            Value::StringType(id_name) => {
+              scope.set(id_name.to_string(), Rc::clone(&value));
+              Ok(value)
+            },
+            _ => Err(EvalError::new("The first argument of def must be a function returning a string!".to_string())) 
+          }
+        } else {
+          Err(EvalError::new("The first argument of def must be a function returning a string!".to_string()))
+        }
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
+    }),
     // Add function
     ("+", Function {
       parameters: vec!["v1".to_string(), "v2".to_string()],
