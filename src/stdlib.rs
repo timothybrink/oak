@@ -8,14 +8,14 @@ use std::rc::Rc;
 
 pub struct NativeExpression<F>
 where 
-  F: Fn(&Scope<'_>) -> Result<Rc<Value>, EvalError>
+  F: Fn(Rc<Scope>) -> Result<Rc<Value>, EvalError>
 {
   pub function: F,
 }
 
 impl<F> NativeExpression<F>
 where 
-  F: Fn(&Scope<'_>) -> Result<Rc<Value>, EvalError>
+  F: Fn(Rc<Scope>) -> Result<Rc<Value>, EvalError>
 {
   pub fn new(f: F) -> NativeExpression<F> {
     NativeExpression {
@@ -26,16 +26,16 @@ where
 
 impl<F> Expression for NativeExpression<F>
 where
-  F: Fn(&Scope<'_>) -> Result<Rc<Value>, EvalError>
+  F: Fn(Rc<Scope>) -> Result<Rc<Value>, EvalError>
 {
-  fn evaluate(&self, scope: &Scope<'_>, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+  fn evaluate(&self, scope: Rc<Scope>, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
     (self.function)(scope)
   }
 }
 
 impl<F> Debug for NativeExpression<F>
 where
-  F:  Fn(&Scope<'_>) -> Result<Rc<Value>, EvalError>
+  F:  Fn(Rc<Scope>) -> Result<Rc<Value>, EvalError>
 {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     f.write_str("NativeExpression")
@@ -46,14 +46,15 @@ pub fn insert_stdlib(scope: &mut Scope) {
   let fns = vec![
     ("print", Function {
       parameters: vec!["input".to_string()],
-      body: Box::new(NativeExpression::new(|scope| {
+      body: Rc::new(NativeExpression::new(|scope| {
         println!("{}", *scope.get("input")?);
         Ok(Rc::new(Value::Null))
-      }))
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
     }),
     ("+", Function {
       parameters: vec!["v1".to_string(), "v2".to_string()],
-      body: Box::new(NativeExpression::new(|scope| {
+      body: Rc::new(NativeExpression::new(|scope| {
         let v1 = match *scope.get("v1")? {
           Value::Number(num) => num,
           _ => return Err(EvalError::new("+ only valid for numbers!".to_string())),
@@ -63,7 +64,8 @@ pub fn insert_stdlib(scope: &mut Scope) {
           _ => return Err(EvalError::new("+ only valid for numbers!".to_string())),
         };
         Ok(Rc::new(Value::Number(v1 + v2)))
-      }))
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
     })
   ];
 

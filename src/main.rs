@@ -54,5 +54,5 @@ pub fn run(prgm: String, _config: Config) -> Result<Rc<classes::Value>, errors::
   // insert stdlib
   stdlib::insert_stdlib(&mut prgm_scope);
 
-  main_expression.evaluate(&prgm_scope, Rc::new(classes::Value::Null))
+  main_expression.evaluate(Rc::new(prgm_scope), Rc::new(classes::Value::Null))
 }

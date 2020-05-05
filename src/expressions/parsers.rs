@@ -1,11 +1,12 @@
 use crate::classes::*;
 use crate::errors::EvalError;
 use super::*;
+use crate::stdlib::NativeExpression;
 
 // Generic expression parser function, used whenever any expression has
 // sub expressions to evaluate: decides which expression is there, and calls
 // the respective Expression constructor
-pub fn generic(iter: &mut StringIterator) -> Result<Box<dyn Expression>, EvalError> {
+pub fn generic(iter: &mut StringIterator) -> Result<Rc<dyn Expression>, EvalError> {
   // Assumes no whitespace
 
   let first_char = match iter.preview() {
@@ -14,15 +15,15 @@ pub fn generic(iter: &mut StringIterator) -> Result<Box<dyn Expression>, EvalErr
   };
 
   if first_char == '{' {
-    Ok(Box::new(BlockExpression::new(iter)?))
+    Ok(Rc::new(BlockExpression::new(iter)?))
   } else if first_char == '(' {
-    Ok(Box::new(FunctionExpression::new(iter)?))
+    Ok(Rc::new(FunctionExpression::new(iter)?))
     // Below are all characters that can begin a literal
   } else if first_char.is_digit(10) || ['\'', '"', '[', '/', '.'].contains(&first_char) {
-    Ok(Box::new(LiteralExpression::new(iter)?))
+    Ok(Rc::new(LiteralExpression::new(iter)?))
     // Below are all reserved characters that are not covered by previous cases
   } else if !['}', ')', ']', '\\'].contains(&first_char) {
-    Ok(Box::new(IdentifierExpression::new(iter)?))
+    Ok(Rc::new(IdentifierExpression::new(iter)?))
   } else {
     Err(EvalError::new(format!("Unknown expression type starting with character {}", first_char)))
   }
@@ -133,6 +134,54 @@ pub fn function_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError
   let fn_obj = Function {
     parameters,
     body,
+    closure: None,
+  };
+
+  Ok(Rc::new(Value::Function(fn_obj)))
+}
+
+pub fn array_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> {
+  // consume opening bracket
+  iter.next();
+
+  let mut expressions = Vec::new();
+
+  loop {
+    match iter.preview() {
+      Some(' ') => {
+        iter.next();
+        continue;
+      },
+      Some(']') => {
+        iter.next();
+        break;
+      },
+      Some(_) => {
+        expressions.push(generic(iter)?);
+      },
+      None => return Err(EvalError::new("Unexpected end of file!".to_string()))
+    }
+  }
+
+  let fn_body = NativeExpression::new(move |scope| {
+    let index = scope.get("index")?;
+    let index = if let Value::Number(i) = *index {
+      i as usize
+    } else {
+      return Err(EvalError::new("Arguments to arrays must be numbers!".to_string()))
+    };
+
+    let expr = match expressions.get(index) {
+      Some(e) => e,
+      None => return Ok(Rc::new(Value::Null))
+    };
+    Ok(expr.evaluate(scope, Rc::new(Value::Null))?)
+  });
+
+  let fn_obj = Function {
+    parameters: vec!["index".to_string()],
+    body: Rc::new(fn_body),
+    closure: None,
   };
 
   Ok(Rc::new(Value::Function(fn_obj)))

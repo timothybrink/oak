@@ -10,7 +10,7 @@ mod parsers;
 // #                       EXPRESSION TRAIT                       #
 // ################################################################
 pub trait Expression: fmt::Debug {
-  fn evaluate(&self, scope: &Scope<'_>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
+  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
 }
 
 // ################################################################
@@ -19,23 +19,41 @@ pub trait Expression: fmt::Debug {
 #[derive(Debug, PartialEq, Clone)]
 pub struct LiteralExpression {
   value: Rc<Value>,
+  closure: bool,
 }
 
 impl LiteralExpression {
   pub fn new(iter: &mut StringIterator) -> Result<LiteralExpression, EvalError> {
     match iter.preview() {
-      Some('0'..='9')        => Ok(LiteralExpression { value: parsers::number_parser(iter)? }),
-      Some('\'') | Some('"') => Ok(LiteralExpression { value: parsers::string_parser(iter)? }),
-      Some('/') | Some('.')  => Ok(LiteralExpression { value: parsers::function_parser(iter)? }),
-      Some(ch)                => Err(EvalError::new(format!("Unknown character {}!", ch))),
+      Some('0'..='9')        => Ok(LiteralExpression { value: parsers::number_parser(iter)?, closure: false }),
+      Some('\'') | Some('"') => Ok(LiteralExpression { value: parsers::string_parser(iter)?, closure: false }),
+      Some('/') | Some('.')  => Ok(LiteralExpression { value: parsers::function_parser(iter)?, closure: true }),
+      Some('[')              => Ok(LiteralExpression { value: parsers::array_parser(iter)?, closure: true }),
+      Some(ch)               => Err(EvalError::new(format!("Unknown character {}!", ch))),
       None                   => Err(EvalError::new("End of string reached".to_string())),
     }
   }
 }
 
 impl Expression for LiteralExpression {
-  fn evaluate(&self, _scope: &Scope, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
-    Ok(Rc::clone(&self.value))
+  fn evaluate(&self, scope: Rc<Scope>, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+    // NOTE: Array and function literals require closure access. In other words,
+    // the scope that gets passed in HERE is what they get evaluated in terms of.
+    if self.closure {
+      let fn_obj = if let Value::Function(obj) = &*self.value {
+        obj
+      } else {
+        return Err(EvalError::new("Only functions may require closure access!".to_string()))
+      };
+
+      // Add current scope as closure scope
+      let mut fn_obj = fn_obj.clone();
+      fn_obj.closure = Some(scope);
+
+      Ok(Rc::new(Value::Function(fn_obj)))
+    } else {
+      Ok(Rc::clone(&self.value))
+    }
   }
 }
 
@@ -68,7 +86,7 @@ impl IdentifierExpression {
 }
 
 impl Expression for IdentifierExpression {
-  fn evaluate(&self, scope: &Scope, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
     if self.name == "^" {
       Ok(pipe_val)
     } else {
@@ -82,7 +100,7 @@ impl Expression for IdentifierExpression {
 // ################################################################
 #[derive(Debug)]
 pub struct BlockExpression {
-  expressions: Vec<Box<dyn Expression>>,
+  expressions: Vec<Rc<dyn Expression>>,
 }
 
 impl BlockExpression {
@@ -96,7 +114,7 @@ impl BlockExpression {
       Some(_) => true,
       None => false,
     };
-    let mut expressions: Vec<Box<dyn Expression>> = Vec::new();
+    let mut expressions: Vec<Rc<dyn Expression>> = Vec::new();
 
     loop {
       let next_char = match iter.preview() {
@@ -124,13 +142,13 @@ impl BlockExpression {
 }
 
 impl Expression for BlockExpression {
-  fn evaluate(&self, scope: &Scope<'_>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
-    let block_scope = Scope::new(Some(scope));
+  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+    let block_scope = Rc::new(Scope::new(Some(scope)));
 
     let mut val = pipe_val;
 
     for expr in self.expressions.iter() {
-      val = expr.evaluate(&block_scope, Rc::clone(&val))?;
+      val = expr.evaluate(Rc::clone(&block_scope), Rc::clone(&val))?;
     }
 
     // Loop through expressions, return result of the last one.
@@ -144,7 +162,7 @@ impl Expression for BlockExpression {
 #[derive(Debug)]
 struct FunctionExpression {
   identifier: IdentifierExpression,
-  arguments: Vec<Box<dyn Expression>>,
+  arguments: Vec<Rc<dyn Expression>>,
 }
 
 impl FunctionExpression {
@@ -156,7 +174,7 @@ impl FunctionExpression {
     let identifier = IdentifierExpression::new(iter)?;
 
     // Then arguments:
-    let mut arguments: Vec<Box<dyn Expression>> = Vec::new();
+    let mut arguments: Vec<Rc<dyn Expression>> = Vec::new();
 
     loop {
       let next_char = match iter.preview() {
@@ -184,9 +202,9 @@ impl FunctionExpression {
 }
 
 impl Expression for FunctionExpression {
-  fn evaluate(&self, scope: &Scope, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
     // First, get the function object
-    let fn_obj = self.identifier.evaluate(scope, Rc::clone(&pipe_val))?;
+    let fn_obj = self.identifier.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))?;
 
     let fn_obj = match &*fn_obj {
       Value::Function(obj) => obj,
@@ -195,11 +213,18 @@ impl Expression for FunctionExpression {
 
     // Then, evaluate the arguments
     let mut args = self.arguments.iter().map(|arg_expr| {
-      arg_expr.evaluate(scope, Rc::clone(&pipe_val))
+      arg_expr.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))
     });
+    
+    // This bit of matching is necessary for the Rc::clone below.
+    let closure_scope = match &fn_obj.closure {
+      Some(s) => s,
+      None => return Err(EvalError::new("Functions must have a closure scope!".to_string())),
+    };
+    let closure_scope = Rc::clone(closure_scope);
 
     // Then, create a function scope with the values of the arguments
-    let mut fn_scope = Scope::new(Some(scope));
+    let mut fn_scope = Scope::new(Some(closure_scope));
 
     for param_name in fn_obj.parameters.iter() {
       match args.next() {
@@ -211,7 +236,7 @@ impl Expression for FunctionExpression {
 
     // Then, evaluate the function body. Note that for now, pipe is given null
     // in a new function evaluation.
-    Ok(fn_obj.body.evaluate(&fn_scope, Rc::new(Value::Null))?)
+    Ok(fn_obj.body.evaluate(Rc::new(fn_scope), Rc::new(Value::Null))?)
   }
 }
 
@@ -228,7 +253,7 @@ mod tests {
     let s = &String::from("100.0");
     let mut s = StringIterator::new(s);
     let exp = super::LiteralExpression::new(&mut s).unwrap();
-    assert_eq!(exp, super::LiteralExpression { value: Rc::new(Value::Number(100.0)) })
+    assert_eq!(exp, super::LiteralExpression { value: Rc::new(Value::Number(100.0)), closure: false })
   }
 
   #[test]
@@ -237,7 +262,8 @@ mod tests {
     let mut s = StringIterator::new(s);
     let exp = super::LiteralExpression::new(&mut s).unwrap();
     assert_eq!(exp, super::LiteralExpression {
-      value: Rc::new(Value::StringType(String::from("it's a \"test\"\\")))
+      value: Rc::new(Value::StringType(String::from("it's a \"test\"\\"))),
+      closure: false,
     })
   }
 

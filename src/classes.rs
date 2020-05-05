@@ -5,10 +5,17 @@ use std::fmt::Debug;
 use super::errors::*;
 use super::expressions::*;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
   pub parameters: Vec<String>,
-  pub body: Box<dyn Expression>,
+  pub body: Rc<dyn Expression>,
+  pub closure: Option<Rc<Scope>>,
+}
+
+impl Function {
+  pub fn set_closure(&mut self, scope: Rc<Scope>) {
+    self.closure = Some(scope);
+  }
 }
 
 impl PartialEq for Function {
@@ -42,13 +49,14 @@ impl Display for Value {
   }
 }
 
-pub struct Scope<'a> {
+#[derive(Debug)]
+pub struct Scope {
   map: HashMap<String, Rc<Value>>,
-  parent: Option<&'a Scope<'a>>,
+  parent: Option<Rc<Scope>>,
 }
 
-impl<'a> Scope<'a> {
-  pub fn new(parent: Option<&'a Scope<'a>>) -> Self {
+impl Scope {
+  pub fn new(parent: Option<Rc<Scope>>) -> Self {
     let is_global = parent.is_none();
 
     let mut scope = Scope {
