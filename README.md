@@ -12,7 +12,7 @@ In Oak, everything you write is an expression. There are four types of expressio
 
 ### Identifiers
 
-Identifiers are written like you'd expect: `variableName`. When the interpreter evaluates an identifier it simply retrieves the associated value from memory. Identifiers can be made up of pretty much any non-reserved set of non-whitespace characters. Reserved characters here are usually just characters used in other syntax.
+Identifiers are written like you'd expect: `variableName`. When the interpreter evaluates an identifier it simply retrieves the associated value from memory. Identifiers can be made up of pretty much any non-reserved set of non-whitespace characters. Reserved characters here are usually just characters used in other syntax. There is one special identifier: `^`. See the block expression section for more info.
 
 ### Literal expressions
 
@@ -34,11 +34,11 @@ Function expressions, or function application, is denoted with soft brackets enc
 
 ### Identifier Declaration (Function Definition)
 
-_Note: This has not been implemented yet. I know that may seem pretty useless, but it is actually a more functional style of programming... I will probably add it at some point, for the sake of ease of use, but not for sure._
+_Note: This is still in the works. Extreme pure-blooded functional programming is possible right now, however, especially with the aid of the ^ identifier._
 
 Identifiers are associated with values via the `def` function, which takes two arguments. The first argument is the identifier to associate with the expression, and the second is an expression whose value will be stored in memory.
 
-As for the last argument, any expression is valid. The result of evaluating that expression will be stored in memory, whether it be a constant value or a function. There is no real difference between values or functions as far is the `def` function or the memory is concerned, however. The only difference is that functions can be called, as described above.
+As for the last argument, any expression is valid. The result of evaluating that expression will be stored in memory, whether it be a constant value or a function. There is no real difference between values or functions as far as the `def` function or the memory is concerned, however. The only difference is that functions can be called, as described above.
 
 ### Examples
 
