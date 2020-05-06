@@ -100,6 +100,54 @@ pub fn insert_stdlib(scope: &mut Scope) {
       })),
       closure: Some(Rc::new(Scope::new(None)))
     }),
+    ("<", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(n1) = &*scope.get("v1")? {
+          if let Value::Number(n2) = &*scope.get("v2")? {
+            return Ok(Rc::new(Value::Boolean(n1 < n2)))
+          }
+        }
+        Err(EvalError::new("< requires numbers as arguments!".to_string()))
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
+    }),
+    (">", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(n1) = &*scope.get("v1")? {
+          if let Value::Number(n2) = &*scope.get("v2")? {
+            return Ok(Rc::new(Value::Boolean(n1 > n2)))
+          }
+        }
+        Err(EvalError::new("> requires numbers as arguments!".to_string()))
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
+    }),
+    ("<=", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(n1) = &*scope.get("v1")? {
+          if let Value::Number(n2) = &*scope.get("v2")? {
+            return Ok(Rc::new(Value::Boolean(n1 <= n2)))
+          }
+        }
+        Err(EvalError::new("<= requires numbers as arguments!".to_string()))
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
+    }),
+    (">=", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(n1) = &*scope.get("v1")? {
+          if let Value::Number(n2) = &*scope.get("v2")? {
+            return Ok(Rc::new(Value::Boolean(n1 >= n2)))
+          }
+        }
+        Err(EvalError::new(">= requires numbers as arguments!".to_string()))
+      })),
+      closure: Some(Rc::new(Scope::new(None)))
+    }),
     // if function
     ("if", Function {
       parameters: vec!["condition".to_string(), "then".to_string(), "else".to_string()],
