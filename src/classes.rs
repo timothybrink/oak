@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::fmt::Display;
 use std::fmt::Debug;
+use std::fmt;
 use std::ops::Add;
 use std::cell::RefCell;
 use super::errors::*;
@@ -96,7 +97,7 @@ impl Add for &Value {
 }
 
 impl Display for Value {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let val = match self {
       Value::Number(num) => num.to_string(),
       Value::StringType(st) => st.clone(),
@@ -109,7 +110,6 @@ impl Display for Value {
   }
 }
 
-#[derive(Debug)]
 pub struct Scope {
   map: RefCell<HashMap<String, Rc<Value>>>,
   parent: Option<Rc<Scope>>,
@@ -149,6 +149,26 @@ impl Scope {
 
   pub fn set(&self, id: String, val: Rc<Value>) {
     self.map.borrow_mut().insert(id, val);
+  }
+
+  pub fn display_map(&self) -> String {
+    let mut string = String::new();
+
+    for (key, value) in &*self.map.borrow() {
+      string.push_str(&format!("{}: {}, ", key, value))
+    }
+
+    string
+  }
+}
+
+impl Debug for Scope {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+    f.debug_struct("Scope:")
+      .field("map", &self.display_map())
+      .field("parent", &self.parent)
+      .finish()
   }
 }
 
