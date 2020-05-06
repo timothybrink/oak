@@ -3,6 +3,7 @@ use crate::classes::*;
 use crate::errors::*;
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::process;
 
 // NativeExpression struct, used to create stdlib functions more easily.
 
@@ -213,6 +214,19 @@ pub fn insert_stdlib(scope: &mut Scope) {
         }
       })),
       closure: Some(Rc::new(Scope::new(None))),
+    }),
+    // exit function
+    ("exit", Function {
+      parameters: vec!["code".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let code = scope.get("code")?;
+        let code = match *code {
+          Value::Number(n) => n as i32,
+          _ => 0
+        };
+        process::exit(code)
+      })),
+    closure: Some(Rc::new(Scope::new(None))),
     })
   ];
 
