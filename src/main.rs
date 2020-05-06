@@ -41,8 +41,8 @@ fn main() {
   });
 
   match run(prgm, config) {
-    Ok(val) => println!("Oak: Result: {:?}", &*val),
-    Err(e) => eprintln!("Oak: Interpreter error: {}", e.reason)
+    Ok(val) => println!("Oak - result: {:#?}", &*val),
+    Err(e) => eprintln!("Oak - interpreter error: {}", e.reason)
   };
 }
 
