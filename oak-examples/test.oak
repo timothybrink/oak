@@ -19,3 +19,30 @@ This is just a super basic bunch of working Oak syntax.
   (print 'is not a function')
   false
 })
+
+(def .'boolTest' true)
+
+(def .'helloStr' .'Hello World!')
+
+(def .'helloWorld' /name .{
+  (print name)
+  (print (helloStr))
+})
+
+(def .'printName' /name .(helloWorld name))
+
+(if boolTest .{
+  (printName 'tim')
+} .{
+  (helloWorld 'Tim')
+})
+
+(def .'arr' [1 2 3 4])
+
+(foreach arr /i prev .{
+  (print i)
+})
+
+(for arr /i prev .{
+  (print i)
+})

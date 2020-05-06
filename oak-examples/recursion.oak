@@ -1,0 +1,9 @@
+(def .'sum' /arr .{
+  (if (= (type arr) 'function') .{
+    (foreach arr /item prev .{
+      (+ prev (sum item))
+    })
+  } .{ arr })
+})
+
+(sum [1 [2 [7 7]] 23 1 6 [0]])
