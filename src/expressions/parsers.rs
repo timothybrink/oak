@@ -19,7 +19,7 @@ pub fn generic(iter: &mut StringIterator) -> Result<Rc<dyn Expression>, EvalErro
   } else if first_char == '(' {
     Ok(Rc::new(FunctionExpression::new(iter)?))
     // Below are all characters that can begin a literal
-  } else if first_char.is_digit(10) || ['\'', '"', '[', '/', '.'].contains(&first_char) {
+  } else if first_char.is_digit(10) || ['\'', '"', '[', '/', '.', '-'].contains(&first_char) {
     Ok(Rc::new(LiteralExpression::new(iter)?))
     // Below are all reserved characters that are not covered by previous cases
   } else if !['}', ')', ']', '\\'].contains(&first_char) {
@@ -37,15 +37,17 @@ pub fn number_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> 
       Some(val) => val,
       None => break,
     };
+    value.push(this_char);
     let next_char = match iter.preview() {
       Some(val) => val,
       None => break,
     };
-    value.push(this_char);
     if !next_char.is_digit(10) && next_char != '.' {
       break; // before the non-numeric character is consumed
     }
   }
+
+  println!("{}", value);
 
   let value: f64 = match value.parse() {
     Ok(val) => val,

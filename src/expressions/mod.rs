@@ -25,12 +25,12 @@ pub struct LiteralExpression {
 impl LiteralExpression {
   pub fn new(iter: &mut StringIterator) -> Result<LiteralExpression, EvalError> {
     match iter.preview() {
-      Some('0'..='9')        => Ok(LiteralExpression { value: parsers::number_parser(iter)?, closure: false }),
-      Some('\'') | Some('"') => Ok(LiteralExpression { value: parsers::string_parser(iter)?, closure: false }),
-      Some('/') | Some('.')  => Ok(LiteralExpression { value: parsers::function_parser(iter)?, closure: true }),
-      Some('[')              => Ok(LiteralExpression { value: parsers::array_parser(iter)?, closure: true }),
-      Some(ch)               => Err(EvalError::new(format!("Unknown character {}!", ch))),
-      None                   => Err(EvalError::new("End of string reached".to_string())),
+      Some('0'..='9') | Some('-') => Ok(LiteralExpression { value: parsers::number_parser(iter)?, closure: false }),
+      Some('\'') | Some('"')      => Ok(LiteralExpression { value: parsers::string_parser(iter)?, closure: false }),
+      Some('/') | Some('.')       => Ok(LiteralExpression { value: parsers::function_parser(iter)?, closure: true }),
+      Some('[')                   => Ok(LiteralExpression { value: parsers::array_parser(iter)?, closure: true }),
+      Some(ch)                    => Err(EvalError::new(format!("Unknown character {}!", ch))),
+      None                        => Err(EvalError::new("End of string reached".to_string())),
     }
   }
 }
