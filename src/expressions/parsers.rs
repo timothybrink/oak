@@ -47,8 +47,6 @@ pub fn number_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> 
     }
   }
 
-  println!("{}", value);
-
   let value: f64 = match value.parse() {
     Ok(val) => val,
     Err(_) => return Err(EvalError::new("Invalid numeric literal!".to_string())),
