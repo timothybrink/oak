@@ -69,6 +69,8 @@ impl Add for &Value {
       Value::Number(num1) => {
         if let Value::Number(num2) = rhs {
           Value::Number(num1 + num2)
+        } else if let Value::Null = rhs {
+          Value::Number(*num1)
         } else {
           Value::Null
         }
@@ -80,6 +82,13 @@ impl Add for &Value {
           Value::Null
         }
       },
+      Value::Null => {
+        if let Value::Number(num2) = rhs {
+          Value::Number(*num2)
+        } else {
+          Value::Null
+        }
+      }
       _ => Value::Null,
     };
     Rc::new(output)
