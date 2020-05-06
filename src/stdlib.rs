@@ -91,6 +91,59 @@ pub fn insert_stdlib(scope: &mut Scope) {
       })),
       closure: Some(Rc::new(Scope::new(None))),
     }),
+    // multiply function
+    ("*", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let v1 = &*scope.get("v1")?;
+        let v2 = &*scope.get("v2")?;
+        Ok(v1 * v2)
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
+    }),
+    // div function
+    ("div", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(n1) = &*scope.get("v1")? {
+          if let Value::Number(n2) = &*scope.get("v2")? {
+            return Ok(Rc::new(Value::Number(n1 / n2)))
+          }
+        }
+        Err(EvalError::new("div requires numbers as arguments!".to_string()))
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
+    }),
+    // power function
+    ("**", Function {
+      parameters: vec!["v1".to_string(), "v2".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(n1) = &*scope.get("v1")? {
+          if let Value::Number(n2) = &*scope.get("v2")? {
+            return Ok(Rc::new(Value::Number(n1.powf(*n2))))
+          }
+        }
+        Err(EvalError::new("** requires numbers as arguments!".to_string()))
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
+    }),
+    // sqrt function
+    ("sqrt", Function {
+      parameters: vec!["val".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        if let Value::Number(num) = &*scope.get("val")? {
+          let result = num.sqrt();
+          if result.is_nan() {
+            Ok(Rc::new(Value::Null))
+          } else {
+            Ok(Rc::new(Value::Number(result)))
+          }
+        } else {
+          Err(EvalError::new("sqrt requires a number as argument!".to_string()))
+        }
+      })),
+      closure: Some(Rc::new(Scope::new(None))),
+    }),
     ("=", Function {
       parameters: vec!["v1".to_string(), "v2".to_string()],
       body: Rc::new(NativeExpression::new(|scope| {

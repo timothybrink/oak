@@ -3,7 +3,7 @@ use std::rc::Rc;
 use std::fmt::Display;
 use std::fmt::Debug;
 use std::fmt;
-use std::ops::Add;
+use std::ops::{Add, Mul};
 use std::cell::RefCell;
 use super::errors::*;
 use super::expressions::*;
@@ -90,6 +90,33 @@ impl Add for &Value {
           Value::Null
         }
       }
+      _ => Value::Null,
+    };
+    Rc::new(output)
+  }
+}
+
+impl Mul for &Value {
+  type Output = Rc<Value>;
+
+  fn mul(self, rhs: Self) -> Rc<Value> {
+    let output = match self {
+      Value::Number(num1) => {
+        if let Value::Number(num2) = rhs {
+          Value::Number(num1 * num2)
+        } else if let Value::Null = rhs {
+          Value::Number(0.0)
+        } else {
+          Value::Null
+        }
+      },
+      Value::StringType(str1) => {
+        if let Value::Number(num2) = rhs {
+          Value::StringType(str1.repeat(*num2 as usize))
+        } else {
+          Value::Null
+        }
+      },
       _ => Value::Null,
     };
     Rc::new(output)
