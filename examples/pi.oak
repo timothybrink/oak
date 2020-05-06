@@ -1,0 +1,12 @@
+(def .'sum' /i n summand total .{
+  (if (<= i n) .{
+    (sum (+ i 1) n summand (+ total (summand i)))
+  } .total)
+})
+
+(def .'summand' /i .{
+  (div (** -1 i) (* (+ 1 (* 2 i)) (** 3 i)))
+})
+
+(sum 0 100 summand)
+(* ^ (div 6 (sqrt 3)))
