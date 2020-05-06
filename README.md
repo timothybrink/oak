@@ -54,7 +54,7 @@ Defining a function:
 })
 ```
 
-For more syntax and usage examples, see the oak-examples directory.
+For more syntax and usage examples, see the examples directory.
 
 ### Built ins
 
