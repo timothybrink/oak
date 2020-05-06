@@ -1,6 +1,6 @@
 [package]
 name = "oak"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Timothy Brink <contact@timothybrink.dev>"]
 edition = "2018"
 
