@@ -1,0 +1,18 @@
+(def .'c' /first rest .{
+  /i .(if (= i 0) .first .rest)
+})
+
+(def .'first' /cList .{
+  (if (= (type cList) 'function') .{
+    (cList 0)
+  } .(print 'Error: first takes a function'))
+})
+(def .'rest' /cList .{
+  (if (= (type cList) 'function') .{
+    (cList 1)
+  } .(print 'Error: rest takes a function'))
+})
+
+(def .'list' (c 1 (c 2 3)))
+
+(first list)
