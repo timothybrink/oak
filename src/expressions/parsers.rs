@@ -167,8 +167,10 @@ pub fn array_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> {
     let index = scope.get("index")?;
     let index = if let Value::Number(i) = *index {
       i as usize
+    } else if let Value::Null = *index {
+      return Ok(Rc::new(Value::Null));
     } else {
-      return Err(EvalError::new("Arguments to arrays must be numbers!".to_string()))
+      return Err(EvalError::new("Arguments to arrays must be numbers!".to_string()));
     };
 
     let expr = match expressions.get(index) {
