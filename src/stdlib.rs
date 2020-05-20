@@ -248,7 +248,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
       })),
       closure: Some(Rc::new(Scope::new(None)))
     }),
-    // for function
+    // for function; function gets evaluated with arguments index and accumulator
     ("for", Function {
       parameters: vec!["array".to_string(), "function".to_string()],
       body: Rc::new(NativeExpression::new(|scope| {
@@ -282,7 +282,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
       })),
       closure: Some(Rc::new(Scope::new(None))),
     }),
-    // foreach function
+    // foreach function; function gets evaluated with arguments item and accumulator
     ("foreach", Function {
       parameters: vec!["array".to_string(), "function".to_string()],
       body: Rc::new(NativeExpression::new(|scope| {
@@ -326,6 +326,33 @@ pub fn insert_stdlib(scope: &mut Scope) {
           _ => 0
         };
         process::exit(code)
+      })),
+    closure: Some(Rc::new(Scope::new(None))),
+    }),
+    // findIndex function; returns index of given item in given array
+    ("findIndex", Function {
+      parameters: vec!["array".to_string(), "item".to_string()],
+      body: Rc::new(NativeExpression::new(|scope| {
+        let array = scope.get("array")?;
+        let item = scope.get("item")?;
+        
+        if let Value::Function(arr_obj) = &*array {
+          let mut index = 0;
+          loop {
+            let element = arr_obj.call(vec![Rc::new(Value::Number(index as f64))])?;
+            // if element equals item, return index
+            if element == item {
+              break Ok(Rc::new(Value::Number(index as f64)));
+            }
+            // end of array; didn't find; return null
+            if let Value::Null = &*element {
+              break Ok(Rc::new(Value::Null));
+            }
+            index = index + 1;
+          }
+        } else {
+          Err(EvalError::new("the first argument of findIndex must be an array!".to_string()))
+        }
       })),
     closure: Some(Rc::new(Scope::new(None))),
     })
