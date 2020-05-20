@@ -161,7 +161,7 @@ impl Expression for BlockExpression {
 // ################################################################
 #[derive(Debug)]
 struct FunctionExpression {
-  identifier: IdentifierExpression,
+  function: Rc<dyn Expression>,
   arguments: Vec<Rc<dyn Expression>>,
 }
 
@@ -170,8 +170,8 @@ impl FunctionExpression {
     // Consume opening parenthesis
     iter.next();
 
-    // First is the identifier.
-    let identifier = IdentifierExpression::new(iter)?;
+    // First is the function itself.
+    let function = parsers::generic(iter)?;
 
     // Then arguments:
     let mut arguments: Vec<Rc<dyn Expression>> = Vec::new();
@@ -195,7 +195,7 @@ impl FunctionExpression {
     }
 
     Ok(FunctionExpression {
-      identifier,
+      function,
       arguments,
     })
   }
@@ -204,11 +204,11 @@ impl FunctionExpression {
 impl Expression for FunctionExpression {
   fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
     // First, get the function object
-    let fn_obj = self.identifier.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))?;
+    let fn_obj = self.function.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))?;
 
     let fn_obj = match &*fn_obj {
       Value::Function(obj) => obj,
-      _ => return Err(EvalError::new(format!("Identifier {} does not reference a valid function!", self.identifier.name)))
+      _ => return Err(EvalError::new("the first item in a function expression does not evaluate to a function!".to_string()))
     };
 
     // Then, evaluate the arguments
