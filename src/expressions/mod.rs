@@ -18,8 +18,8 @@ pub trait Expression: fmt::Debug {
 // ################################################################
 #[derive(Debug, PartialEq, Clone)]
 pub struct LiteralExpression {
-  value: Rc<Value>,
-  closure: bool,
+  pub value: Rc<Value>,
+  pub closure: bool,
 }
 
 impl LiteralExpression {
@@ -62,7 +62,7 @@ impl Expression for LiteralExpression {
 // ################################################################
 #[derive(Debug, PartialEq, Clone)]
 pub struct IdentifierExpression {
-  name: String,
+  pub name: String,
 }
 
 impl IdentifierExpression {
@@ -100,7 +100,7 @@ impl Expression for IdentifierExpression {
 // ################################################################
 #[derive(Debug)]
 pub struct BlockExpression {
-  expressions: Vec<Rc<dyn Expression>>,
+  pub expressions: Vec<Rc<dyn Expression>>,
 }
 
 impl BlockExpression {
@@ -160,9 +160,9 @@ impl Expression for BlockExpression {
 // #                     FUNCTION EXPRESSION                      #
 // ################################################################
 #[derive(Debug)]
-struct FunctionExpression {
-  function: Rc<dyn Expression>,
-  arguments: Vec<Rc<dyn Expression>>,
+pub struct FunctionExpression {
+  pub function: Rc<dyn Expression>,
+  pub arguments: Vec<Rc<dyn Expression>>,
 }
 
 impl FunctionExpression {
