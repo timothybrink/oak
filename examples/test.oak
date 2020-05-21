@@ -39,6 +39,8 @@ This is just a super basic bunch of working Oak syntax.
 
 (def .'arr' [1 2 3 4])
 
+([1 2 3] 2)
+
 (foreach arr /i prev .{
   (print i)
 })
@@ -46,3 +48,11 @@ This is just a super basic bunch of working Oak syntax.
 (for arr /i prev .{
   (print i)
 })
+
+(print '----------')
+
+(print (findIndex ['a' 'b' 'c'] 'b'))
+
+(def .'map' (osm [0 1 2 3] ['0' '1' '2' 'f']))
+
+(map 3)
