@@ -48,7 +48,14 @@ fn main() {
 
 pub fn run(prgm: String, _config: Config) -> Result<Rc<classes::Value>, errors::EvalError> {
   let mut str_iter = classes::StringIterator::new(&prgm);
-  let main_expression = expressions::BlockExpression::new(&mut str_iter)?;
+
+  // create a block expression that contains all the expressions in the prelude,
+  // plus another block expression containing the file contents
+  let mut expressions = stdlib::get_prelude();
+  expressions.push(Rc::new(expressions::BlockExpression::new(&mut str_iter)?));
+  let main_expression = crate::expressions::BlockExpression {
+    expressions
+  };
   let mut prgm_scope = classes::Scope::new(None);
 
   // insert stdlib

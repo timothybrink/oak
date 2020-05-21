@@ -1,4 +1,4 @@
-use crate::expressions::Expression;
+use crate::expressions::*;
 use crate::classes::*;
 use crate::errors::*;
 use std::fmt::Debug;
@@ -327,7 +327,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
         };
         process::exit(code)
       })),
-    closure: Some(Rc::new(Scope::new(None))),
+      closure: Some(Rc::new(Scope::new(None))),
     }),
     // findIndex function; returns index of given item in given array
     ("findIndex", Function {
@@ -354,11 +354,67 @@ pub fn insert_stdlib(scope: &mut Scope) {
           Err(EvalError::new("the first argument of findIndex must be an array!".to_string()))
         }
       })),
-    closure: Some(Rc::new(Scope::new(None))),
+      closure: Some(Rc::new(Scope::new(None))),
     })
   ];
 
   for (fn_name, fn_obj) in fns {
     scope.set(fn_name.to_string(), Rc::new(Value::Function(fn_obj)))
   }
+}
+
+
+pub fn get_prelude() -> Vec<Rc<dyn Expression>> {
+  vec![
+    // ordered set mapping function; returns a function that takes elements of
+    // the first array and returns the corresponding element of the second array
+    Rc::new(FunctionExpression {
+      function: Rc::new(IdentifierExpression { name: "def".to_string() }),
+      arguments: vec![
+        Rc::new(LiteralExpression {
+          value: Rc::new(Value::Function(
+            Function {
+              parameters: vec![],
+              body: Rc::new(LiteralExpression {
+                value: Rc::new(Value::StringType("osm".to_string())),
+                closure: false
+              }),
+              closure: None
+            }
+          )),
+          closure: true
+        }),
+        Rc::new(LiteralExpression {
+          value: Rc::new(Value::Function(
+            Function {
+              parameters: vec!["arr1".to_string(), "arr2".to_string()],
+              body: Rc::new(LiteralExpression {
+                value: Rc::new(Value::Function(
+                  Function {
+                    parameters: vec!["item".to_string()],
+                    body: Rc::new(FunctionExpression {
+                      function: Rc::new(IdentifierExpression { name: "arr2".to_string() }),
+                      arguments: vec![
+                        Rc::new(FunctionExpression {
+                          function: Rc::new(IdentifierExpression { name: "findIndex".to_string() }),
+                          arguments: vec![
+                            Rc::new(IdentifierExpression { name: "arr1".to_string() }),
+                            Rc::new(IdentifierExpression { name: "item".to_string() }),
+                          ]
+                        })
+                      ]
+                    }),
+                    closure: None
+                  },
+                )),
+                closure: true
+              }),
+              closure: None
+            }
+          )),
+          closure: true
+        })
+      ]
+    })
+  ]
 }
