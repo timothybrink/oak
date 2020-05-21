@@ -30,7 +30,7 @@ Block expressions are denoted by curly braces (`{}`), and consist of a list of e
 
 ### Function Expressions
 
-Function expressions, or function application, is denoted with soft brackets enclosing a list of expressions separated by spaces. The first expression (which must be an identifier) is the function to call, and any later ones are the arguments to the function. For example, `(print 'Hello World!')`
+Function expressions, or function application, is denoted with soft brackets enclosing a list of expressions separated by spaces. The first expression must evaluate to the function to call, and any later ones are the arguments to the function. For example, `(print 'Hello World!')`
 
 ### Identifier Declaration (Function Definition)
 
@@ -59,6 +59,8 @@ For more syntax and usage examples, see the examples directory.
 ### Built ins
 
 Built in functions (like `+`, `print`, and so on) are overridable, as the interpreter considers them to be ordinary functions defined in the topmost scope. See src/stdlib.rs for definitions of the various functions.
+
+Also, in addition to built ins defined in Rust, there is support for built ins defined in (parsed) Oak: see the end of src/stdlib.rs for an example.
 
 ## Usage
 

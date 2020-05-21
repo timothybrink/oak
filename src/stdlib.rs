@@ -367,7 +367,9 @@ pub fn insert_stdlib(scope: &mut Scope) {
 pub fn get_prelude() -> Vec<Rc<dyn Expression>> {
   vec![
     // ordered set mapping function; returns a function that takes elements of
-    // the first array and returns the corresponding element of the second array
+    // the first array and returns the corresponding element of the second array.
+    // The parsed Oak below corresponds exactly to the following line of code:
+    // (def .'osm' /arr1 arr2 ./item .(arr2 (findIndex arr1 item)))
     Rc::new(FunctionExpression {
       function: Rc::new(IdentifierExpression { name: "def".to_string() }),
       arguments: vec![
