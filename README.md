@@ -36,7 +36,7 @@ Function expressions, or function application, is denoted with soft brackets enc
 
 Identifiers are associated with values via the `def` function, which takes two arguments. The first argument is a function literal returning a string, which will be the name of the identifier associated with the expression, and the second is an expression whose value will be stored in memory.
 
-Note: since the `def` function is not very functional in style, it requires a bit of a hack to get at the scope in which to store things (i.e. the scope in which it is called, whereas usually a function would only have access to the scope in which it was defined). This is the reason for the requirement that you pass it a function literal as the first argument.
+Note: since the `def` function is not really a pure function, it requires a bit of a hack to get at the scope in which it is called (as usually a function would only have access to the scope in which it was defined). This is the reason for the requirement that you pass it a function literal as the first argument.
 
 As for the last argument, any expression is valid. The result of evaluating that expression will be stored in memory, whether it be a constant value or a function. There is no real difference between values or functions as far as the `def` function or the memory is concerned, however. The only difference is that functions can be called, as described above.
 
