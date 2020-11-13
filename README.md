@@ -2,7 +2,7 @@
 
 ### Interpreted Functional Programming
 
-Oak is (my attempt at) a programming language that is entirely coherent (that is, based on a single core concept that every part of the language fits into). The approach was partly inspired by languages like Haskell and Lisp, and the basic concept is that everything is a composition and assembly of functions and expressions. It is still very much in development.
+Oak is my attempt at a programming language based on a single core concept, which every part of the language then fits into. The approach was partly inspired by languages like Haskell and Lisp, and the central idea of Oak is that everything is a composition and assembly of functions and expressions.
 
 ## Concepts
 
