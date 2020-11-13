@@ -4,6 +4,8 @@
 
 Oak is my attempt at a programming language based on a single core concept, which every part of the language then fits into. The approach was partly inspired by languages like Haskell and Lisp, and the central idea of Oak is that everything is a composition and assembly of functions and expressions.
 
+Try it out in your browser at [my website](https://timothybrink.dev/oak).
+
 ## Concepts
 
 In Oak, everything you write is an expression. There are four types of expressions: the literal expression, which consists of a value (e.g. string, number, or function); the identifier expression, which represents a value in memory; the block expression, which is a series of other expressions; and the function expression, which is some other expression evaluated with given inputs (i.e. function application). In this way, the entire semantics of Oak consists of three things: data, function definition, and function application.
