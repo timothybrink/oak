@@ -10,7 +10,7 @@ mod parsers;
 // #                       EXPRESSION TRAIT                       #
 // ################################################################
 pub trait Expression: fmt::Debug {
-  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
+    fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError>;
 }
 
 // ################################################################
@@ -18,43 +18,57 @@ pub trait Expression: fmt::Debug {
 // ################################################################
 #[derive(Debug, PartialEq, Clone)]
 pub struct LiteralExpression {
-  pub value: Rc<Value>,
-  pub closure: bool,
+    pub value: Rc<Value>,
+    pub closure: bool,
 }
 
 impl LiteralExpression {
-  pub fn new(iter: &mut StringIterator) -> Result<LiteralExpression, EvalError> {
-    match iter.preview() {
-      Some('0'..='9') | Some('-') => Ok(LiteralExpression { value: parsers::number_parser(iter)?, closure: false }),
-      Some('\'') | Some('"')      => Ok(LiteralExpression { value: parsers::string_parser(iter)?, closure: false }),
-      Some('/') | Some('.')       => Ok(LiteralExpression { value: parsers::function_parser(iter)?, closure: true }),
-      Some('[')                   => Ok(LiteralExpression { value: parsers::array_parser(iter)?, closure: true }),
-      Some(ch)                    => Err(EvalError::new(format!("Unknown character {}!", ch))),
-      None                        => Err(EvalError::new("End of string reached".to_string())),
+    pub fn new(iter: &mut StringIterator) -> Result<LiteralExpression, EvalError> {
+        match iter.preview() {
+            Some('0'..='9') | Some('-') => Ok(LiteralExpression {
+                value: parsers::number_parser(iter)?,
+                closure: false,
+            }),
+            Some('\'') | Some('"') => Ok(LiteralExpression {
+                value: parsers::string_parser(iter)?,
+                closure: false,
+            }),
+            Some('/') | Some('.') => Ok(LiteralExpression {
+                value: parsers::function_parser(iter)?,
+                closure: true,
+            }),
+            Some('[') => Ok(LiteralExpression {
+                value: parsers::array_parser(iter)?,
+                closure: true,
+            }),
+            Some(ch) => Err(EvalError::new(format!("Unknown character {}!", ch))),
+            None => Err(EvalError::new("End of string reached".to_string())),
+        }
     }
-  }
 }
 
 impl Expression for LiteralExpression {
-  fn evaluate(&self, scope: Rc<Scope>, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
-    // NOTE: Array and function literals require closure access. In other words,
-    // the scope that gets passed in HERE is what they get evaluated in terms of.
-    if self.closure {
-      let fn_obj = if let Value::Function(obj) = &*self.value {
-        obj
-      } else {
-        return Err(EvalError::new("Only functions may require closure access!".to_string()))
-      };
+    fn evaluate(&self, scope: Rc<Scope>, _pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+        // NOTE: Array and function literals require closure access. In other words,
+        // the scope that gets passed in HERE is what they get evaluated in terms of.
+        if self.closure {
+            let fn_obj = if let Value::Function(obj) = &*self.value {
+                obj
+            } else {
+                return Err(EvalError::new(
+                    "Only functions may require closure access!".to_string(),
+                ));
+            };
 
-      // Add current scope as closure scope
-      let mut fn_obj = fn_obj.clone();
-      fn_obj.closure = Some(scope);
+            // Add current scope as closure scope
+            let mut fn_obj = fn_obj.clone();
+            fn_obj.closure = Some(scope);
 
-      Ok(Rc::new(Value::Function(fn_obj)))
-    } else {
-      Ok(Rc::clone(&self.value))
+            Ok(Rc::new(Value::Function(fn_obj)))
+        } else {
+            Ok(Rc::clone(&self.value))
+        }
     }
-  }
 }
 
 // ################################################################
@@ -62,37 +76,37 @@ impl Expression for LiteralExpression {
 // ################################################################
 #[derive(Debug, PartialEq, Clone)]
 pub struct IdentifierExpression {
-  pub name: String,
+    pub name: String,
 }
 
 impl IdentifierExpression {
-  pub fn new(iter: &mut StringIterator) -> Result<IdentifierExpression, EvalError> {
-    let mut name = String::new();
-  
-    loop {
-      let next_char = match iter.preview() {
-        Some(val) => val,
-        None => break,
-      };
-      if next_char.is_whitespace() || "(){}[]./".contains(next_char) {
-        break;
-      }
-      name.push(next_char);
-      iter.next();
+    pub fn new(iter: &mut StringIterator) -> Result<IdentifierExpression, EvalError> {
+        let mut name = String::new();
+
+        loop {
+            let next_char = match iter.preview() {
+                Some(val) => val,
+                None => break,
+            };
+            if next_char.is_whitespace() || "(){}[]./".contains(next_char) {
+                break;
+            }
+            name.push(next_char);
+            iter.next();
+        }
+
+        Ok(IdentifierExpression { name })
     }
-  
-    Ok(IdentifierExpression{ name })
-  }
 }
 
 impl Expression for IdentifierExpression {
-  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
-    if self.name == "^" {
-      Ok(pipe_val)
-    } else {
-      Ok(scope.get(&self.name)?)
+    fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+        if self.name == "^" {
+            Ok(pipe_val)
+        } else {
+            Ok(scope.get(&self.name)?)
+        }
     }
-  }
 }
 
 // ################################################################
@@ -100,60 +114,58 @@ impl Expression for IdentifierExpression {
 // ################################################################
 #[derive(Debug)]
 pub struct BlockExpression {
-  pub expressions: Vec<Rc<dyn Expression>>,
+    pub expressions: Vec<Rc<dyn Expression>>,
 }
 
 impl BlockExpression {
-  pub fn new(iter: &mut StringIterator) -> Result<BlockExpression, EvalError> {
-    let is_program_block = match iter.preview() {
-      Some('{') => {
-        // consume opening bracket
-        iter.next();
-        false
-      },
-      Some(_) => true,
-      None => false,
-    };
-    let mut expressions: Vec<Rc<dyn Expression>> = Vec::new();
+    pub fn new(iter: &mut StringIterator) -> Result<BlockExpression, EvalError> {
+        let is_program_block = match iter.preview() {
+            Some('{') => {
+                // consume opening bracket
+                iter.next();
+                false
+            }
+            Some(_) => true,
+            None => false,
+        };
+        let mut expressions: Vec<Rc<dyn Expression>> = Vec::new();
 
-    loop {
-      let next_char = match iter.preview() {
-        Some(val) => val,
-        None => break
-      };
-      
-      // consume whitespace
-      if next_char.is_whitespace() {
-        iter.next();
-        continue;
-      } else if !is_program_block && next_char == '}' {
-        // consume
-        iter.next();
-        break;
-      } else {
-        expressions.push(parsers::generic(iter)?);
-      }
+        loop {
+            let next_char = match iter.preview() {
+                Some(val) => val,
+                None => break,
+            };
+
+            // consume whitespace
+            if next_char.is_whitespace() {
+                iter.next();
+                continue;
+            } else if !is_program_block && next_char == '}' {
+                // consume
+                iter.next();
+                break;
+            } else {
+                expressions.push(parsers::generic(iter)?);
+            }
+        }
+
+        Ok(BlockExpression { expressions })
     }
-
-    Ok(BlockExpression {
-      expressions,
-    })
-  }
 }
 
 impl Expression for BlockExpression {
-  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
-    let block_scope = Rc::new(Scope::new(Some(scope)));
+    fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+        let block_scope = Rc::new(Scope::new(Some(scope)));
 
-    let mut val = pipe_val;
+        let mut val = pipe_val;
 
-    for expr in self.expressions.iter() {
-      val = expr.evaluate(Rc::clone(&block_scope), Rc::clone(&val))?;
+        for expr in self.expressions.iter() {
+            val = expr.evaluate(Rc::clone(&block_scope), Rc::clone(&val))?;
+        }
+
+        // Loop through expressions, return result of the last one.
+        Ok(val)
     }
-
-    // Loop through expressions, return result of the last one.
-    Ok(val)
-  }
 }
 
 // ################################################################
@@ -161,73 +173,83 @@ impl Expression for BlockExpression {
 // ################################################################
 #[derive(Debug)]
 pub struct FunctionExpression {
-  pub function: Rc<dyn Expression>,
-  pub arguments: Vec<Rc<dyn Expression>>,
+    pub function: Rc<dyn Expression>,
+    pub arguments: Vec<Rc<dyn Expression>>,
 }
 
 impl FunctionExpression {
-  pub fn new(iter: &mut StringIterator) -> Result<FunctionExpression, EvalError> {
-    // Consume opening parenthesis
-    iter.next();
-
-    // First is the function itself.
-    let function = parsers::generic(iter)?;
-
-    // Then arguments:
-    let mut arguments: Vec<Rc<dyn Expression>> = Vec::new();
-
-    loop {
-      let next_char = match iter.preview() {
-        Some(val) => val,
-        None => return Err(EvalError::new("End of function expression not found!".to_string()))
-      };
-
-      // consume whitespace
-      if next_char.is_whitespace() {
+    pub fn new(iter: &mut StringIterator) -> Result<FunctionExpression, EvalError> {
+        // Consume opening parenthesis
         iter.next();
-        continue;
-      } else if next_char == ')' {
-        iter.next();
-        break;
-      } else {
-        arguments.push(parsers::generic(iter)?);
-      }
+
+        // First is the function itself.
+        let function = parsers::generic(iter)?;
+
+        // Then arguments:
+        let mut arguments: Vec<Rc<dyn Expression>> = Vec::new();
+
+        loop {
+            let next_char = match iter.preview() {
+                Some(val) => val,
+                None => {
+                    return Err(EvalError::new(
+                        "End of function expression not found!".to_string(),
+                    ))
+                }
+            };
+
+            // consume whitespace
+            if next_char.is_whitespace() {
+                iter.next();
+                continue;
+            } else if next_char == ')' {
+                iter.next();
+                break;
+            } else {
+                arguments.push(parsers::generic(iter)?);
+            }
+        }
+
+        Ok(FunctionExpression {
+            function,
+            arguments,
+        })
     }
-
-    Ok(FunctionExpression {
-      function,
-      arguments,
-    })
-  }
 }
 
 impl Expression for FunctionExpression {
-  fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
-    // First, get the function object
-    let fn_obj = self.function.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))?;
+    fn evaluate(&self, scope: Rc<Scope>, pipe_val: Rc<Value>) -> Result<Rc<Value>, EvalError> {
+        // First, get the function object
+        let fn_obj = self
+            .function
+            .evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))?;
 
-    let fn_obj = match &*fn_obj {
-      Value::Function(obj) => obj,
-      _ => return Err(EvalError::new("the first item in a function expression does not evaluate to a function!".to_string()))
-    };
+        let fn_obj = match &*fn_obj {
+            Value::Function(obj) => obj,
+            _ => {
+                return Err(EvalError::new(
+                    "the first item in a function expression does not evaluate to a function!"
+                        .to_string(),
+                ))
+            }
+        };
 
-    // Then, evaluate the arguments
-    let (args, errors): (Vec<_>, Vec<_>) = self.arguments
-      .iter()
-      .map(|arg_expr| {
-        arg_expr.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val))
-      })
-      .partition(Result::is_ok);
+        // Then, evaluate the arguments
+        let (args, errors): (Vec<_>, Vec<_>) = self
+            .arguments
+            .iter()
+            .map(|arg_expr| arg_expr.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val)))
+            .partition(Result::is_ok);
 
-    if errors.len() > 0 {
-      return Err(errors[0].clone().unwrap_err())
+        if errors.len() > 0 {
+            return Err(errors[0].clone().unwrap_err());
+        }
+
+        let args: Vec<Rc<Value>> = args.into_iter().map(Result::unwrap).collect();
+
+        // Finally, call the function
+        fn_obj.call(args)
     }
-
-    let args: Vec<Rc<Value>> = args.into_iter().map(Result::unwrap).collect();
-
-    // Finally, call the function
-    fn_obj.call(args)
-  }
 }
 
 // ################################################################
@@ -235,57 +257,71 @@ impl Expression for FunctionExpression {
 // ################################################################
 #[cfg(test)]
 mod tests {
-  use crate::classes::*;
-  use std::rc::Rc;
+    use crate::classes::*;
+    use std::rc::Rc;
 
-  #[test]
-  fn parses_numerics() {
-    let s = &String::from("100.0");
-    let mut s = StringIterator::new(s);
-    let exp = super::LiteralExpression::new(&mut s).unwrap();
-    assert_eq!(exp, super::LiteralExpression { value: Rc::new(Value::Number(100.0)), closure: false })
-  }
+    #[test]
+    fn parses_numerics() {
+        let s = &String::from("100.0");
+        let mut s = StringIterator::new(s);
+        let exp = super::LiteralExpression::new(&mut s).unwrap();
+        assert_eq!(
+            exp,
+            super::LiteralExpression {
+                value: Rc::new(Value::Number(100.0)),
+                closure: false
+            }
+        )
+    }
 
-  #[test]
-  fn parses_strings() {
-    let s = &String::from("'it\\'s a \"test\"\\\\'  ");
-    let mut s = StringIterator::new(s);
-    let exp = super::LiteralExpression::new(&mut s).unwrap();
-    assert_eq!(exp, super::LiteralExpression {
-      value: Rc::new(Value::StringType(String::from("it's a \"test\"\\"))),
-      closure: false,
-    })
-  }
+    #[test]
+    fn parses_strings() {
+        let s = &String::from("'it\\'s a \"test\"\\\\'  ");
+        let mut s = StringIterator::new(s);
+        let exp = super::LiteralExpression::new(&mut s).unwrap();
+        assert_eq!(
+            exp,
+            super::LiteralExpression {
+                value: Rc::new(Value::StringType(String::from("it's a \"test\"\\"))),
+                closure: false,
+            }
+        )
+    }
 
-  #[test]
-  fn parses_functions() {
-    let s = &"/test a b .'string'W".to_string();
-    let mut s = StringIterator::new(s);
-    let exp = super::LiteralExpression::new(&mut s).unwrap();
-    println!("{:?}", exp);
-  }
+    #[test]
+    fn parses_functions() {
+        let s = &"/test a b .'string'W".to_string();
+        let mut s = StringIterator::new(s);
+        let exp = super::LiteralExpression::new(&mut s).unwrap();
+        println!("{:?}", exp);
+    }
 
-  #[test]
-  fn parses_identifiers() {
-    let s = &"+test)tes ".to_string();
-    let mut s = StringIterator::new(s);
-    let exp = super::IdentifierExpression::new(&mut s).unwrap();
-    assert_eq!(exp, super::IdentifierExpression{ name: String::from("+test") })
-  }
+    #[test]
+    fn parses_identifiers() {
+        let s = &"+test)tes ".to_string();
+        let mut s = StringIterator::new(s);
+        let exp = super::IdentifierExpression::new(&mut s).unwrap();
+        assert_eq!(
+            exp,
+            super::IdentifierExpression {
+                name: String::from("+test")
+            }
+        )
+    }
 
-  #[test]
-  fn parses_function_calls() {
-    let s = &"(test 'a b c' (b) /arg c e .{c e})".to_string();
-    let mut s = StringIterator::new(s);
-    let exp = super::FunctionExpression::new(&mut s).unwrap();
-    println!("{:#?}", exp);
-  }
+    #[test]
+    fn parses_function_calls() {
+        let s = &"(test 'a b c' (b) /arg c e .{c e})".to_string();
+        let mut s = StringIterator::new(s);
+        let exp = super::FunctionExpression::new(&mut s).unwrap();
+        println!("{:#?}", exp);
+    }
 
-  #[test]
-  fn parses_blocks() {
-    let s = &"{10 'test' (fn a b) (def .test /a b c .{body})}".to_string();
-    let mut s = StringIterator::new(s);
-    let exp = super::BlockExpression::new(&mut s).unwrap();
-    println!("{:#?}", exp);
-  }
+    #[test]
+    fn parses_blocks() {
+        let s = &"{10 'test' (fn a b) (def .test /a b c .{body})}".to_string();
+        let mut s = StringIterator::new(s);
+        let exp = super::BlockExpression::new(&mut s).unwrap();
+        println!("{:#?}", exp);
+    }
 }
