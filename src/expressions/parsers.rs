@@ -1,5 +1,4 @@
 use super::*;
-use crate::classes::*;
 use crate::errors::EvalError;
 use crate::stdlib::NativeExpression;
 
@@ -39,11 +38,7 @@ pub fn generic(iter: &mut StringIterator) -> Result<Rc<dyn Expression>, EvalErro
 pub fn number_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError> {
     let mut value = String::new();
 
-    loop {
-        let this_char = match iter.next() {
-            Some(val) => val,
-            None => break,
-        };
+    while let Some(this_char) = iter.next() {
         value.push(this_char);
         let next_char = match iter.preview() {
             Some(val) => val,
@@ -123,7 +118,7 @@ pub fn function_parser(iter: &mut StringIterator) -> Result<Rc<Value>, EvalError
                 }
                 Some('.') => {
                     if !current_param.is_empty() {
-                        parameters.push(current_param.clone());
+                        parameters.push(current_param);
                     }
                     break;
                 }

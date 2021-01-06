@@ -327,25 +327,23 @@ pub fn insert_stdlib(scope: &mut Scope) {
                     if let Value::Function(arr_obj) = &*array {
                         if !arr_obj.parameters.contains(&"index".to_string()) {
                             Err(EvalError::new("for requires a valid array".to_string()))
-                        } else {
-                            if let Value::Function(fn_obj) = &*function {
-                                let mut index = 0;
-                                let mut prev: Rc<Value> = Rc::new(Value::Null);
-                                loop {
-                                    let index_val = Rc::new(Value::Number(index as f64));
-                                    let element = arr_obj.call(vec![Rc::clone(&index_val)])?;
-                                    if let Value::Null = &*element {
-                                        break;
-                                    }
-                                    prev = fn_obj.call(vec![index_val, prev])?;
-                                    index = index + 1;
+                        } else if let Value::Function(fn_obj) = &*function {
+                            let mut index = 0;
+                            let mut prev: Rc<Value> = Rc::new(Value::Null);
+                            loop {
+                                let index_val = Rc::new(Value::Number(index as f64));
+                                let element = arr_obj.call(vec![Rc::clone(&index_val)])?;
+                                if let Value::Null = &*element {
+                                    break;
                                 }
-                                Ok(prev)
-                            } else {
-                                Err(EvalError::new(
-                                    "for requires a function as the second argument".to_string(),
-                                ))
+                                prev = fn_obj.call(vec![index_val, prev])?;
+                                index += 1;
                             }
+                            Ok(prev)
+                        } else {
+                            Err(EvalError::new(
+                                "for requires a function as the second argument".to_string(),
+                            ))
                         }
                     } else {
                         Err(EvalError::new("for requires a valid array".to_string()))
@@ -366,26 +364,23 @@ pub fn insert_stdlib(scope: &mut Scope) {
                     if let Value::Function(arr_obj) = &*array {
                         if !arr_obj.parameters.contains(&"index".to_string()) {
                             Err(EvalError::new("foreach requires a valid array".to_string()))
-                        } else {
-                            if let Value::Function(fn_obj) = &*function {
-                                let mut index = 0;
-                                let mut prev: Rc<Value> = Rc::new(Value::Null);
-                                loop {
-                                    let index_val = Rc::new(Value::Number(index as f64));
-                                    let element = arr_obj.call(vec![Rc::clone(&index_val)])?;
-                                    if let Value::Null = &*element {
-                                        break;
-                                    }
-                                    prev = fn_obj.call(vec![element, prev])?;
-                                    index = index + 1;
+                        } else if let Value::Function(fn_obj) = &*function {
+                            let mut index = 0;
+                            let mut prev: Rc<Value> = Rc::new(Value::Null);
+                            loop {
+                                let index_val = Rc::new(Value::Number(index as f64));
+                                let element = arr_obj.call(vec![Rc::clone(&index_val)])?;
+                                if let Value::Null = &*element {
+                                    break;
                                 }
-                                Ok(prev)
-                            } else {
-                                Err(EvalError::new(
-                                    "foreach requires a function as the second argument"
-                                        .to_string(),
-                                ))
+                                prev = fn_obj.call(vec![element, prev])?;
+                                index += 1;
                             }
+                            Ok(prev)
+                        } else {
+                            Err(EvalError::new(
+                                "foreach requires a function as the second argument".to_string(),
+                            ))
                         }
                     } else {
                         Err(EvalError::new("foreach requires a valid array".to_string()))
@@ -432,7 +427,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                             if let Value::Null = &*element {
                                 break Ok(Rc::new(Value::Null));
                             }
-                            index = index + 1;
+                            index += 1;
                         }
                     } else {
                         Err(EvalError::new(

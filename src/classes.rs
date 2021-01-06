@@ -160,12 +160,10 @@ impl Scope {
             hash_map.insert(String::from("null"), Rc::new(Value::Null));
         }
 
-        let scope = Scope {
+        Scope {
             map: RefCell::new(hash_map),
             parent,
-        };
-
-        scope
+        }
     }
 
     pub fn get(&self, id: &str) -> Result<Rc<Value>, EvalError> {
@@ -218,7 +216,7 @@ impl<'a> Iterator for StringIterator<'a> {
 }
 
 impl<'a> StringIterator<'a> {
-    pub fn new<'b>(string: &'b String) -> StringIterator {
+    pub fn new(string: &str) -> StringIterator {
         let mut iter = Box::new(string.chars());
         let next_value = iter.next();
 

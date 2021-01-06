@@ -83,11 +83,7 @@ impl IdentifierExpression {
     pub fn new(iter: &mut StringIterator) -> Result<IdentifierExpression, EvalError> {
         let mut name = String::new();
 
-        loop {
-            let next_char = match iter.preview() {
-                Some(val) => val,
-                None => break,
-            };
+        while let Some(next_char) = iter.preview() {
             if next_char.is_whitespace() || "(){}[]./".contains(next_char) {
                 break;
             }
@@ -130,12 +126,7 @@ impl BlockExpression {
         };
         let mut expressions: Vec<Rc<dyn Expression>> = Vec::new();
 
-        loop {
-            let next_char = match iter.preview() {
-                Some(val) => val,
-                None => break,
-            };
-
+        while let Some(next_char) = iter.preview() {
             // consume whitespace
             if next_char.is_whitespace() {
                 iter.next();
@@ -241,7 +232,7 @@ impl Expression for FunctionExpression {
             .map(|arg_expr| arg_expr.evaluate(Rc::clone(&scope), Rc::clone(&pipe_val)))
             .partition(Result::is_ok);
 
-        if errors.len() > 0 {
+        if !errors.is_empty() {
             return Err(errors[0].clone().unwrap_err());
         }
 
