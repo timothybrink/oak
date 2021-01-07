@@ -1,5 +1,4 @@
-use super::classes::*;
-use super::errors::*;
+use super::common::*;
 use std::fmt;
 use std::fmt::Debug;
 use std::rc::Rc;
@@ -248,7 +247,7 @@ impl Expression for FunctionExpression {
 // ################################################################
 #[cfg(test)]
 mod tests {
-    use crate::classes::*;
+    use crate::common::*;
     use std::rc::Rc;
 
     #[test]

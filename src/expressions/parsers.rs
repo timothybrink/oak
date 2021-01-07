@@ -1,5 +1,5 @@
 use super::*;
-use crate::errors::EvalError;
+use crate::common::EvalError;
 use crate::stdlib::NativeExpression;
 
 // Generic expression parser function, used whenever any expression has
