@@ -1,27 +1,22 @@
 use std::rc::Rc;
 
-pub mod common;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
+mod common;
 mod expressions;
 mod stdlib;
+mod util;
 
-use common::Value;
 use expressions::Expression;
-
-/// This trait is used to provide interfaces to slightly more platform-dependant calls like log and exit.
-/// For example, the handling on WASM would be different than on native.
-pub trait NativeInterface {
-    fn log(&self, msg: Rc<Value>);
-    fn exit(&self, code: i32) -> !;
-}
 
 pub struct Config {
     pub program: String,
-    pub sys_int: Rc<dyn NativeInterface>,
 }
 
 impl Config {
-    pub fn new(program: String, sys_int: Rc<dyn NativeInterface>) -> Self {
-        Config { program, sys_int }
+    pub fn new(program: String) -> Self {
+        Config { program }
     }
 
     pub fn run(&self) -> Result<Rc<common::Value>, common::EvalError> {
@@ -32,11 +27,28 @@ impl Config {
         let mut expressions = stdlib::get_prelude();
         expressions.push(Rc::new(expressions::BlockExpression::new(&mut str_iter)?));
         let main_expression = crate::expressions::BlockExpression { expressions };
-        let mut prgm_scope = common::Scope::new_global(Rc::clone(&self.sys_int));
+        let mut prgm_scope = common::Scope::new(None);
 
         // insert stdlib
         stdlib::insert_stdlib(&mut prgm_scope);
 
         main_expression.evaluate(Rc::new(prgm_scope), Rc::new(common::Value::Null))
     }
+}
+
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn run_oak(program: String) -> JsValue {
+    match Config::new(program).run() {
+        Ok(val) => JsValue::from_str(&val.to_string()),
+        Err(e) => JsValue::from_str(&e.to_string()),
+    }
+}
+
+// expect logging function (log_oak) to be exposed globally in the JS
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+extern "C" {
+  fn log_oak(s: &str);
 }

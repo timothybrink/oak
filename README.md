@@ -8,7 +8,7 @@ Haskell and Lisp, and the central idea of Oak is that everything is a compositio
 assembly of functions and expressions. Keep in mind that Oak is really more of a proof
 of concept than a serious language, however.
 
-Try it out in your browser at [my website](https://timothybrink.dev/oak).
+Try it out in your browser at [my website](https://www.timothybrink.dev/oak).
 
 ## Concepts
 
@@ -140,5 +140,13 @@ in (parsed) Oak: see the end of src/stdlib.rs for an example.
 ## Usage
 
 The Oak interpreter is written in Rust. To obtain the source code,
-`git clone https://github.com/timothybrink/oak.git`. To build it, run
-`cargo build --release`. The resulting binary takes a single argument: the oak file to run. You can also run without explicitly building with `cargo run <oakfile.oak>`.
+`git clone https://github.com/timothybrink/oak.git`. To build it, use
+`cargo build`. The resulting binary takes a single argument: the oak file to run.
+Also, because the crate has a single binary, you can `cargo install` it if you like.
+
+### WASM
+
+The Oak interpreter can also be compiled to WASM using the [wasm-pack tool](https://rustwasm.github.io/wasm-pack/).
+A simple `wasm-pack build` should work, to build it for a bundler (use the wasm-pack `--target` option
+for other JS targets). Note that the Rust code expects a JS log_oak
+function exposed at a global level to take print messages from Oak.

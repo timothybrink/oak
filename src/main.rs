@@ -1,23 +1,8 @@
 use std::env;
 use std::fs;
 use std::process;
-use std::rc::Rc;
 
-use oak::common::Value;
 use oak::Config;
-use oak::NativeInterface;
-
-struct StdInterface {}
-
-impl NativeInterface for StdInterface {
-    fn log(&self, msg: Rc<Value>) {
-        println!("{}", msg);
-    }
-
-    fn exit(&self, code: i32) -> ! {
-        process::exit(code);
-    }
-}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -34,7 +19,7 @@ fn main() {
         process::exit(1);
     });
 
-    let prgm_config = Config::new(program, Rc::new(StdInterface {}));
+    let prgm_config = Config::new(program);
 
     match prgm_config.run() {
         Ok(val) => println!("Oak - result: {}", &*val),

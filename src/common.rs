@@ -1,5 +1,3 @@
-use crate::NativeInterface;
-
 use super::expressions::*;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -147,34 +145,22 @@ impl Display for Value {
 pub struct Scope {
     map: RefCell<HashMap<String, Rc<Value>>>,
     parent: Option<Rc<Scope>>,
-    pub sysint: Rc<dyn NativeInterface>,
 }
 
 impl Scope {
-    pub fn new_global(sysint: Rc<dyn NativeInterface>) -> Self {
+    pub fn new(parent: Option<Rc<Scope>>) -> Self {
         let mut hash_map = HashMap::new();
 
-        hash_map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
-        hash_map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
-        hash_map.insert(String::from("null"), Rc::new(Value::Null));
+        if parent.is_none() {
+            // Parent is a global scope
+            hash_map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
+            hash_map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
+            hash_map.insert(String::from("null"), Rc::new(Value::Null));
+        }
 
         Scope {
             map: RefCell::new(hash_map),
-            parent: None,
-            sysint,
-        }
-    }
-
-    /// Create new scope from parent scope. Inherits system interface from
-    /// parent. Don't call with parent = None; use new_global instead
-    pub fn new(parent: Option<Rc<Scope>>) -> Self {
-        let parent = parent.unwrap();
-        let sysint = Rc::clone(&parent.sysint);
-
-        Scope {
-            map: RefCell::new(HashMap::new()),
-            parent: Some(parent),
-            sysint,
+            parent,
         }
     }
 
@@ -248,5 +234,12 @@ pub struct EvalError {
 impl EvalError {
     pub fn new(reason: String) -> EvalError {
         EvalError { reason }
+    }
+}
+
+impl Display for EvalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "EvalError: {}", self.reason)?;
+        Ok(())
     }
 }

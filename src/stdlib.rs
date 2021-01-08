@@ -1,5 +1,6 @@
 use crate::common::*;
 use crate::expressions::*;
+use crate::util;
 use std::fmt::Debug;
 use std::rc::Rc;
 
@@ -47,10 +48,10 @@ pub fn insert_stdlib(scope: &mut Scope) {
             Function {
                 parameters: vec!["input".to_string()],
                 body: Rc::new(NativeExpression::new(|scope| {
-                    scope.sysint.log(scope.get("input")?);
+                    util::log(scope.get("input")?);
                     Ok(Rc::new(Value::Null))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // def function
@@ -87,7 +88,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         ))
                     }
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // Add function
@@ -100,7 +101,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                     let v2 = &*scope.get("v2")?;
                     Ok(v1 + v2)
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // multiply function
@@ -113,7 +114,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                     let v2 = &*scope.get("v2")?;
                     Ok(v1 * v2)
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // div function
@@ -131,7 +132,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         "div requires numbers as arguments!".to_string(),
                     ))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // power function
@@ -149,7 +150,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         "** requires numbers as arguments!".to_string(),
                     ))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // sqrt function
@@ -171,7 +172,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         ))
                     }
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         (
@@ -183,7 +184,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                     let v2 = &*scope.get("v2")?;
                     Ok(Rc::new(Value::Boolean(v1 == v2)))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         (
@@ -200,7 +201,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         "< requires numbers as arguments!".to_string(),
                     ))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         (
@@ -217,7 +218,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         "> requires numbers as arguments!".to_string(),
                     ))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         (
@@ -234,7 +235,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         "<= requires numbers as arguments!".to_string(),
                     ))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         (
@@ -251,7 +252,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         ">= requires numbers as arguments!".to_string(),
                     ))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // if function
@@ -290,7 +291,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         ))
                     }
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // type function
@@ -310,7 +311,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                     };
                     Ok(Rc::new(Value::StringType(type_str.to_string())))
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // for function; function gets evaluated with arguments index and accumulator
@@ -347,7 +348,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         Err(EvalError::new("for requires a valid array".to_string()))
                     }
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // foreach function; function gets evaluated with arguments item and accumulator
@@ -384,7 +385,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         Err(EvalError::new("foreach requires a valid array".to_string()))
                     }
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // exit function
@@ -398,9 +399,9 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         Value::Number(n) => n as i32,
                         _ => 0,
                     };
-                    scope.sysint.exit(code)
+                    util::exit(code)
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
         // findIndex function; returns index of given item in given array
@@ -433,7 +434,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         ))
                     }
                 })),
-                closure: Some(Rc::new(Scope::new_global(Rc::clone(&scope.sysint)))),
+                closure: Some(Rc::new(Scope::new(None))),
             },
         ),
     ];
