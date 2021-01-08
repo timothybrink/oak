@@ -1,39 +1,45 @@
 use std::rc::Rc;
 
-mod common;
+pub mod common;
 mod expressions;
 mod stdlib;
 
+use common::Value;
 use expressions::Expression;
 
+/// This trait is used to provide interfaces to slightly more platform-dependant calls like log and exit.
+/// For example, the handling on WASM would be different than on native.
+pub trait NativeInterface {
+    fn log(&self, msg: Rc<Value>) -> ();
+    fn exit(&self, code: i32) -> !;
+}
+
 pub struct Config {
-    pub filename: String,
+    pub program: String,
+    pub sys_int: Rc<dyn NativeInterface>,
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 2 {
-            return Err("missing filename!");
+    pub fn new(program: String, sys_int: Rc<dyn NativeInterface>) -> Self {
+        Config {
+            program,
+            sys_int,
         }
-
-        let filename = args[1].clone();
-
-        Ok(Config { filename })
     }
-}
 
-pub fn run(prgm: String, _config: Config) -> Result<Rc<common::Value>, common::EvalError> {
-    let mut str_iter = common::StringIterator::new(&prgm);
+    pub fn run(&self) -> Result<Rc<common::Value>, common::EvalError> {
+        let mut str_iter = common::StringIterator::new(&self.program);
 
-    // create a block expression that contains all the expressions in the prelude,
-    // plus another block expression containing the file contents
-    let mut expressions = stdlib::get_prelude();
-    expressions.push(Rc::new(expressions::BlockExpression::new(&mut str_iter)?));
-    let main_expression = crate::expressions::BlockExpression { expressions };
-    let mut prgm_scope = common::Scope::new(None);
+        // create a block expression that contains all the expressions in the prelude,
+        // plus another block expression containing the file contents
+        let mut expressions = stdlib::get_prelude();
+        expressions.push(Rc::new(expressions::BlockExpression::new(&mut str_iter)?));
+        let main_expression = crate::expressions::BlockExpression { expressions };
+        let mut prgm_scope = common::Scope::new_global(Rc::clone(&self.sys_int));
 
-    // insert stdlib
-    stdlib::insert_stdlib(&mut prgm_scope);
+        // insert stdlib
+        stdlib::insert_stdlib(&mut prgm_scope);
 
-    main_expression.evaluate(Rc::new(prgm_scope), Rc::new(common::Value::Null))
+        main_expression.evaluate(Rc::new(prgm_scope), Rc::new(common::Value::Null))
+    }
 }
