@@ -11,7 +11,7 @@ struct StdInterface {}
 
 impl NativeInterface for StdInterface {
     fn log(&self, msg: Rc<Value>) {
-        println!("{:?}", msg);
+        println!("{}", msg);
     }
 
     fn exit(&self, code: i32) -> ! {
@@ -37,7 +37,7 @@ fn main() {
     let prgm_config = Config::new(program, Rc::new(StdInterface {}));
 
     match prgm_config.run() {
-        Ok(val) => println!("Oak - result: {:#?}", &*val),
+        Ok(val) => println!("Oak - result: {}", &*val),
         Err(e) => eprintln!("Oak - interpreter error: {}", e.reason),
     };
 }

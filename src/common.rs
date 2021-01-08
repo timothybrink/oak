@@ -134,7 +134,7 @@ impl Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let val = match self {
             Value::Number(num) => num.to_string(),
-            Value::StringType(st) => st.clone(),
+            Value::StringType(st) => format!("\"{}\"", st.clone()),
             Value::Boolean(b) => b.to_string(),
             Value::Function(_) => "Function".to_string(),
             Value::Null => "Null".to_string(),
