@@ -10,7 +10,7 @@ use oak::NativeInterface;
 struct StdInterface {}
 
 impl NativeInterface for StdInterface {
-    fn log(&self, msg: Rc<Value>) -> () {
+    fn log(&self, msg: Rc<Value>) {
         println!("{:?}", msg);
     }
 

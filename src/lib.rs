@@ -10,7 +10,7 @@ use expressions::Expression;
 /// This trait is used to provide interfaces to slightly more platform-dependant calls like log and exit.
 /// For example, the handling on WASM would be different than on native.
 pub trait NativeInterface {
-    fn log(&self, msg: Rc<Value>) -> ();
+    fn log(&self, msg: Rc<Value>);
     fn exit(&self, code: i32) -> !;
 }
 
