@@ -36,7 +36,6 @@ impl Config {
     }
 }
 
-
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub fn run_oak(program: String) -> JsValue {
@@ -50,5 +49,5 @@ pub fn run_oak(program: String) -> JsValue {
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 extern "C" {
-  fn log_oak(s: &str);
+    fn log_oak(s: &str);
 }
