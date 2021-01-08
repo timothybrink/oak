@@ -132,7 +132,7 @@ impl Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let val = match self {
             Value::Number(num) => num.to_string(),
-            Value::StringType(st) => st.clone(),
+            Value::StringType(st) => format!("\"{}\"", st.clone()),
             Value::Boolean(b) => b.to_string(),
             Value::Function(_) => "Function".to_string(),
             Value::Null => "Null".to_string(),
@@ -149,11 +149,10 @@ pub struct Scope {
 
 impl Scope {
     pub fn new(parent: Option<Rc<Scope>>) -> Self {
-        let is_global = parent.is_none();
-
         let mut hash_map = HashMap::new();
 
-        if is_global {
+        if parent.is_none() {
+            // Parent is a global scope
             hash_map.insert(String::from("true"), Rc::new(Value::Boolean(true)));
             hash_map.insert(String::from("false"), Rc::new(Value::Boolean(false)));
             hash_map.insert(String::from("null"), Rc::new(Value::Null));

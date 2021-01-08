@@ -1,7 +1,7 @@
 use crate::common::*;
 use crate::expressions::*;
+use crate::util;
 use std::fmt::Debug;
-use std::process;
 use std::rc::Rc;
 
 // NativeExpression struct, used to create stdlib functions more easily.
@@ -48,7 +48,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
             Function {
                 parameters: vec!["input".to_string()],
                 body: Rc::new(NativeExpression::new(|scope| {
-                    println!("{}", *scope.get("input")?);
+                    util::log(scope.get("input")?);
                     Ok(Rc::new(Value::Null))
                 })),
                 closure: Some(Rc::new(Scope::new(None))),
@@ -399,7 +399,7 @@ pub fn insert_stdlib(scope: &mut Scope) {
                         Value::Number(n) => n as i32,
                         _ => 0,
                     };
-                    process::exit(code)
+                    util::exit(code)
                 })),
                 closure: Some(Rc::new(Scope::new(None))),
             },
