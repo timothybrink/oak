@@ -21,10 +21,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(program: String, sys_int: Rc<dyn NativeInterface>) -> Self {
-        Config {
-            program,
-            sys_int,
-        }
+        Config { program, sys_int }
     }
 
     pub fn run(&self) -> Result<Rc<common::Value>, common::EvalError> {

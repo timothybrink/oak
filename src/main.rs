@@ -3,9 +3,9 @@ use std::fs;
 use std::process;
 use std::rc::Rc;
 
+use oak::common::Value;
 use oak::Config;
 use oak::NativeInterface;
-use oak::common::Value;
 
 struct StdInterface {}
 
