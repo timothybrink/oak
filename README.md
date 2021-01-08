@@ -148,5 +148,5 @@ Also, because the crate has a single binary, you can `cargo install` it if you l
 
 The Oak interpreter can also be compiled to WASM using the [wasm-pack tool](https://rustwasm.github.io/wasm-pack/).
 A simple `wasm-pack build` should work, to build it for a bundler (use the wasm-pack `--target` option
-for other JS targets). Note that the Rust code expects a log_oak
+for other JS targets). Note that the Rust code expects a JS log_oak
 function exposed at a global level to take print messages from Oak.
