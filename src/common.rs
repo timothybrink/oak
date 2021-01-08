@@ -236,3 +236,10 @@ impl EvalError {
         EvalError { reason }
     }
 }
+
+impl Display for EvalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "EvalError: {}", self.reason)?;
+        Ok(())
+    }
+}
