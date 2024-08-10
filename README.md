@@ -8,7 +8,7 @@ Haskell and Lisp, and the central idea of Oak is that everything is a compositio
 assembly of functions and expressions. Keep in mind that Oak is really more of a proof
 of concept than a serious language, however.
 
-Try it out in your browser at [my website](https://www.timothybrink.dev/oak).
+Try it out in your browser at [my website](https://www.timothyrbrink.ca/oak).
 
 ## Concepts
 
