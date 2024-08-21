@@ -1,58 +1,49 @@
 "
-This is just a super basic bunch of working Oak syntax.
+This is just a super basic bunch of working Oak 2 syntax. Strings are not fully
+expanded like they should be because that's a pain. Also ints should be wrapped
+in (int x).
 "
 
-(def .'function' /test .{
-  (print (+ (test 0) (test 1)))
+(main function (fn l (sfm (assertType test l)) (block
+  (print (concat (test 0) (test 1)))
 
-  [(test 2)]
-})
+  (l (test 2)))))
 
-
-(function ["Hello " "World," "from Oak.Rust!"])
+(function (l "Hello " "World," "from Oak v2!"))
 (print (^ 0))
 
-(if (= (type ^) 'function') .{
-  (print 'is a function')
-  true
-} .{
-  (print 'is not a function')
-  false
-})
+(if (istype ^ fn)
+  (block
+    (print "is a function")
+    (bool 1))
+  (block
+    (print "is not a function")
+    (bool 0)))
 
-(def .'boolTest' true)
+(main boolTest (bool 1))
 
-(def .'helloStr' .'Hello World!')
+(main helloStr "Hello World!")
 
-(def .'helloWorld' /name .{
+(main helloWorld (fn str (sfm (assertType name str)) (block
   (print name)
-  (print (helloStr))
-})
+  (print (helloStr))))
 
-(def .'printName' /name .(helloWorld name))
+(main printName (fn str (sfm (assertType name str)) (helloWorld name))
 
-(if boolTest .{
-  (printName 'tim')
-} .{
-  (helloWorld 'Tim')
-})
+(if boolTest
+  (printName "tim")
+  (helloWorld "Tim"))
 
-(def .'arr' [1 2 3 4])
+(main arr (l 1 2 3 4))
 
-([1 2 3] 2)
+((l 1 2 3) 2)
 
-(foreach arr /i prev .{
-  (print i)
-})
+(foreach arr (fn int (sfm i prev) (block
+  (print i)))
 
-(for arr /i prev .{
-  (print i)
-})
+(for arr (fn int (sfm i) (block
+  (print i)))
 
-(print '----------')
+(print "----------")
 
-(print (findIndex ['a' 'b' 'c'] 'b'))
-
-(def .'map' (osm [0 1 2 3] ['0' '1' '2' 'f']))
-
-(map 3)
+(print (findIndex (l 'a' 'b' 'c') 'b'))
