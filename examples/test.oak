@@ -1,7 +1,5 @@
 "
-This is just a super basic bunch of working Oak 2 syntax. Strings are not fully
-expanded like they should be because that's a pain. Also ints should be wrapped
-in (int x).
+This is just a super basic bunch of working Oak 2 syntax.
 "
 
 (main function (fn l (sfm (assertType test l)) (block

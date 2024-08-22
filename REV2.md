@@ -6,14 +6,46 @@ Everything is a function/list. List in that it can be represented as a list,
 function in that the first element of the list defines how to process the rest.
 
 Every list can itself be used as a function, by using it as the first element
-of another list (i.e. function call). Note that the first element defines what
-happens when the list as a whole is used as a function; if it is `fn`, the list
-is executed, or if it is anything else, the list is indexed into.
+of another list (i.e. function call). Really a list is just a function that
+returns a function that adds a given index to a memory address and returns the
+value stored there.
+
+All memory is just lists. So functional programming but in the context of
+global lists.
+
+``
+(mem new_identifier (char 'a'))
+``
+
+Trying to integrate a high level functional approach with low level usage of how
+a computer actually works.
+
+Will need to use shorthand:
+1 is actually (int 1), 'test' is actually (str (char 't')) etc...
 
 ## Typing
 
-So types are functions - a type is simply the output of a known function.
-Because we know the function, we know the stucture and what we can do with it.
+Functins are considered types, because the output
+of a given function has a given meaning/structure.
+Basic types are `char`, `int`, etc. The actual data returned by these functions
+is just binary data, but since it comes from a function we as the programmer
+(or the compiler) knows what it represents. So types just keep track of what
+functions returned a given value.
+For example, (char 'a') returns 61, which is the same binary data as (int 61)
+returning 61, but a different type.
+For a custom function that returns a char (as opposed to an int): we can
+technically follow the calls to see what basic type it came from:
+
+```
+(fn test (block
+  (char test)
+)
+(test 'e')
+```
+
+In this case the return value is of type (test (char)), a kind of linked list of
+types/functions.
+
 Must also support aliases: any function can return a structure of any other type.
 This is also how we can support typed arrays.
 
@@ -22,8 +54,8 @@ Basic types like char just evaluate to themselves:
 
 For getting and setting values in a list, use the following. Note the exact
 same notation would be used for getting and setting values anywhere in memory
-(.text, .data, heap, stack, etc.), each of which could be represented as a separate
-list
+(.text, .data, heap, stack, etc.), each of which could be represented as a
+separate list
 
 ```
 (<list> <index>)           // get
@@ -74,3 +106,9 @@ element. Any identifier refers to a list held in memory.
    or read by many
  - Backend: LLVM? x64 assembly? Custom, with small runtime? Note operations on the text
    segment at would be a whole lot easier with a custom backend/runtime.
+ - Lisp quotes (e.g. (quote test))?
+ - Rust or C?
+
+```
+(main testIdent 'str')
+```
