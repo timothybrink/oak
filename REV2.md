@@ -1,114 +1,93 @@
 # Major language revision ideas
 
-## Concepts
+## Basics
 
-Everything is a function/list. List in that it can be represented as a list,
-function in that the first element of the list defines how to process the rest.
+Everything is a list. Programs and data consist of nested scoped lists, of which
+computer memory is the topmost layer.
 
-Every list can itself be used as a function, by using it as the first element
-of another list (i.e. function call). Really a list is just a function that
-returns a function that adds a given index to a memory address and returns the
-value stored there.
+Functional programming is achieved by the evaluation of these lists. Each list,
+beginning with the program itself (a list of expressions), is evaluated by
+evaluating each of its elements in order.
 
-All memory is just lists. So functional programming but in the context of
-global lists.
+Functions are simply lists whose elements access other elements in the same
+list, and are able to short-circuit evaluation of the list.
 
-``
-(mem new_identifier (char 'a'))
-``
+A static list has simple data (e.g. `(1 2 3)`). A function is achieved by
+replacing simple data (like `1`) with references to the other elements of the
+list (`((pl 1) 2 3) -> (2 2 3)`). `pl` is a pointer to the parent list, or the
+list that pl was called in. The other essential part of this is the ability for
+a list to override the normal evaluation sequence, which would continue through
+the other elements and return the resulting list. To do this, we set the value
+of the parent list. This short-circuits evalution, and we return out of the
+entire parent list with the list given in that function. For example,
+`((pset 1) 2 3) -> 1)`, ignoring the final elements of the list.
 
-Trying to integrate a high level functional approach with low level usage of how
-a computer actually works.
+`(padd q(new_identifier) (char 'a'))`
 
-Will need to use shorthand:
-1 is actually (int 1), 'test' is actually (str (char 't')) etc...
+Trying to integrate a high level functional approach with usage of bare metal
+rather than layers and layers of abstraction.
 
 ## Typing
 
-Functins are considered types, because the output
-of a given function has a given meaning/structure.
-Basic types are `char`, `int`, etc. The actual data returned by these functions
-is just binary data, but since it comes from a function we as the programmer
-(or the compiler) knows what it represents. So types just keep track of what
-functions returned a given value.
-For example, (char 'a') returns 61, which is the same binary data as (int 61)
-returning 61, but a different type.
-For a custom function that returns a char (as opposed to an int): we can
-technically follow the calls to see what basic type it came from:
+Typing is a way of keeping track of what type of data a list contains. Since all
+lists are just binary data and do not have a type metadata, we keep track of
+types in list tuples. For example, `(char 'a')` is a tuple of a pointer to a
+'type constant' (of some kind, not sure yet) and the number 61.
+
+## References
+
+Identifiers refer to indexes in the parent list or super-parent lists, hence
+scoping. They contain an indicator of the level of list, and the index in that
+list.
+
+For getting and setting values in a list, use the following. Note the exact same
+notation would be used for getting and setting values anywhere in memory (.text,
+.data, heap, stack, etc.), each of which could be represented as a separate list
+
+`padd` is a shortcut to the current parent list.
 
 ```
-(fn test (block
-  (char test)
-)
-(test 'e')
+(get <list> <index>)
+(set <list> <index> <val>)
 ```
 
-In this case the return value is of type (test (char)), a kind of linked list of
-types/functions.
-
-Must also support aliases: any function can return a structure of any other type.
-This is also how we can support typed arrays.
-
-Basic types like char just evaluate to themselves:
-`'a'` compiles to `(ch 61)` compiles/evaluates to `61` (1b of binary data).
-
-For getting and setting values in a list, use the following. Note the exact
-same notation would be used for getting and setting values anywhere in memory
-(.text, .data, heap, stack, etc.), each of which could be represented as a
-separate list
+Defining your own lists/types/functions: Set a pointer in memory to a list of
+expressions. It is necessary to quote the list so as to defer evaluation.
 
 ```
-(<list> <index>)           // get
-(<list> <index> <val>)     // set
-```
+(padd (q a_fn) (q
+  (print ("hello world"))
+  (print (pl 1))
+))
 
-Defining your own lists/types/functions:
-Basically defining rules on how to process the remaining elements of a list.
-
-```
-(fn <alias> <stack frame mappings> <list (rules) to evaluate>)
-// uses stack frame mappings, inserts code to manage stack.
-(sfm <arg1> <arg2> ...) // maps arg names to stack frame location
-(asserttype <name> <type>) // compile-time assertion to expect this type of argument
+(a_fn "test")
+-> "hello world"
+-> "test"
 ```
 
 ## Compile-time vs. Runtime
 
-At compile time, we use the type or alias of a function/list for type
-checking. That is, when evaluating arguments to a function call, we first check
-types, then evaluate.
-At run time, everything is evaluated as untyped binary data (the most reduced
-list form).
+At compile time, we use the type or alias of a function/list for type checking.
+That is, when evaluating arguments to a function call, we first check types,
+then evaluate. At run time, everything is evaluated as untyped binary data (the
+most reduced list form).
 
-Eager evaluation at compile time: everything that can be evaluated is
-evaluated. So string literals are processed down to their binary equivalents,
-if they can be assigned in the .data segment they are, etc.
-Macros are therefore supported, but only as completely ordinary functions that
-operate on the special `text` list, which contains the text of the program
-(probably in a kind of AST format). Since their arguments are therefore fully
-defined at compile time, they are run at compile time. Nothing to stop runtime
-text manipulation though.
+Eager evaluation at compile time: everything that can be evaluated is evaluated.
+So string literals are processed down to their binary equivalents, if they can
+be assigned in the .data segment they are, etc. Macros are therefore supported,
+but only as completely ordinary functions that operate on the special `text`
+list, which contains the text of the program (probably in a kind of AST format).
+Since their arguments are therefore fully defined at compile time, they are run
+at compile time. Nothing to stop runtime text manipulation though.
 
-At runtime, lazy evaluation, so only evaluate function calls when their
-data is needed. So full fn list stored in memory, to be evaluated when needed
-(also when it will actually have data in the stack to work on).
-
-## References
-
-Need some kind of reference; function calls can't include copies as the first
-element. Any identifier refers to a list held in memory.
+At runtime, lazy evaluation, so only evaluate function calls when their data is
+needed. So full fn list stored in memory, to be evaluated when needed (also when
+it will actually have data in the stack to work on).
 
 ## Design decisions
 
- - Pipe operator (i.e. symbol that always refers to the value of the last evaluated
-   statement in a block)? Yea or nay?
- - Maybe a kind of ownership - each list can either be modified by a single actor,
-   or read by many
- - Backend: LLVM? x64 assembly? Custom, with small runtime? Note operations on the text
-   segment at would be a whole lot easier with a custom backend/runtime.
- - Lisp quotes (e.g. (quote test))?
- - Rust or C?
-
-```
-(main testIdent 'str')
-```
+- Pipe operator (i.e. symbol that always refers to the value of the last
+  evaluated statement in a block)? Yea or nay?
+- Backend: LLVM? x64 assembly? Custom, with small runtime? Note operations on
+  the text segment at runtime would be a whole lot easier with a custom backend/runtime.
+- Rust or C? Thinking C runtime, but written in Oak as much as possible.
